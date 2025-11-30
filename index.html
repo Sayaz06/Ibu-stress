@@ -1,0 +1,3685 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ibustress - Wan Law</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA basic meta (manifest & icons boleh tambah kemudian) -->
+  <meta name="theme-color" content="#020617" />
+
+  <style>
+    :root {
+      --bg-main: #020617;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border-soft: #1f2937;
+      --border-mid: #4b5563;
+      --btn-gradient-start: #6366f1;
+      --btn-gradient-end: #8b5cf6;
+      --danger: #f97373;
+      --accent: #22c55e;
+      --card-bg: #030712;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #020617 0, #000 55%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    #app-root {
+      min-height: 100vh;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 12px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Top bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 12px;
+      border: 1px solid var(--border-soft);
+      background: linear-gradient(135deg, #020617 0, #020617 40%, #030712 100%);
+      padding: 10px 14px;
+      gap: 12px;
+    }
+
+    .top-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .app-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: linear-gradient(
+        135deg,
+        var(--btn-gradient-start),
+        var(--btn-gradient-end)
+      );
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.18),
+        0 10px 22px rgba(15, 23, 42, 0.9);
+      transition: transform 0.12s ease, box-shadow 0.12s ease,
+        background 0.12s ease, opacity 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 1);
+    }
+
+    .btn:active {
+      transform: translateY(0) scale(0.98);
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.6);
+    }
+
+    .btn-ghost {
+      background: rgba(15, 23, 42, 0.7);
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      box-shadow: none;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(15, 23, 42, 1);
+      box-shadow: 0 0 0 1px var(--border-mid);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #f87171, #ef4444);
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+
+    .btn-full {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-pill {
+      border-radius: 999px;
+    }
+
+    .layout-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, #020617 0, #030712 45%, #000 100%);
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.9);
+      padding: 14px 12px;
+      box-shadow: 0 20px 35px rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .section-note {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Simple input styles */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    textarea,
+    select {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-main);
+      padding: 7px 9px;
+      font-size: 13px;
+      outline: none;
+      transition: border 0.12s ease, box-shadow 0.12s ease,
+        background 0.12s ease, transform 0.08s ease;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--btn-gradient-start);
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.8),
+        0 0 0 6px rgba(79, 70, 229, 0.15);
+      background: rgba(15, 23, 42, 1);
+      transform: translateY(-0.5px);
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .text-sm {
+      font-size: 12px;
+    }
+
+    .text-xs {
+      font-size: 11px;
+    }
+
+    .muted {
+      color: var(--text-muted);
+    }
+
+    .divider {
+      height: 1px;
+      width: 100%;
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(148, 163, 184, 0.4),
+        transparent
+      );
+      margin: 6px 0;
+    }
+
+    .stack-v {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .stack-h {
+      display: flex;
+      flex-direction: row;
+      gap: 6px;
+    }
+
+    .stack-h.wrap {
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      padding: 4px 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .scroll-y {
+      overflow-y: auto;
+    }
+
+    .tag {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .list-item {
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      padding: 7px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.88);
+      cursor: pointer;
+      transition: background 0.12s ease, border 0.12s ease,
+        transform 0.08s ease;
+    }
+
+    .list-item:hover {
+      background: rgba(15, 23, 42, 1);
+      border-color: var(--border-mid);
+      transform: translateY(-1px);
+    }
+
+    .list-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .list-item-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .list-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .list-item-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid var(--border-mid);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .danger-text {
+      color: #fecaca;
+    }
+
+    .success-text {
+      color: #bbf7d0;
+    }
+
+    .center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .center-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .mt-2 {
+      margin-top: 8px;
+    }
+
+    .mt-3 {
+      margin-top: 12px;
+    }
+
+    .mt-4 {
+      margin-top: 16px;
+    }
+
+    .mb-2 {
+      margin-bottom: 8px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .error-banner {
+      border-radius: 10px;
+      padding: 6px 9px;
+      background: rgba(248, 113, 113, 0.08);
+      border: 1px solid rgba(248, 113, 113, 0.5);
+      color: #fecaca;
+      font-size: 11px;
+    }
+
+    /* Simple schedule grid for later */
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 6px;
+    }
+
+    .slot {
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      padding: 4px 6px;
+      background: rgba(15, 23, 42, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 11px;
+      position: relative;
+    }
+
+    .slot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .slot-number {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .slot-activity {
+      font-size: 11px;
+      color: var(--text-main);
+      min-height: 14px;
+    }
+
+    .slot-checkbox {
+      transform: scale(0.8);
+    }
+
+    @media (min-width: 768px) {
+      #app-root {
+        padding: 20px 18px 32px;
+      }
+      .top-bar {
+        padding: 12px 18px;
+      }
+      .card {
+        padding: 14px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app-root">
+    <!-- Top bar dynamic (Ibustress / Wan-Law + buttons) -->
+    <header id="top-bar" class="top-bar">
+      <div class="top-left">
+        <div class="app-title">Ibustress</div>
+        <div class="app-subtitle">Wan-Law</div>
+      </div>
+      <div class="top-right">
+        <button id="btn-log-view" class="btn btn-sm btn-ghost hidden">
+          Log Sejarah
+        </button>
+        <button id="btn-logout" class="btn btn-sm btn-danger hidden">
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- Main SPA area -->
+    <main id="spa-root" class="layout-main">
+      <!-- Content will be rendered by JS -->
+    </main>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // =========================
+    // Firebase INIT
+    // =========================
+    const firebaseConfig = {
+      apiKey: "AIzaSyAGAion3M_Y6xfxhQs6ube8ZeoLfhJFgBo",
+      authDomain: "ibu-stress.firebaseapp.com",
+      projectId: "ibu-stress",
+      storageBucket: "ibu-stress.firebasestorage.app",
+      messagingSenderId: "300977237938",
+      appId: "1:300977237938:web:5a335973bb1c1174897eab",
+      measurementId: "G-KB2S0JDQM4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // =========================
+    // Global SPA State
+    // =========================
+    const spaRoot = document.getElementById("spa-root");
+    const btnLogout = document.getElementById("btn-logout");
+    const btnLogView = document.getElementById("btn-log-view");
+
+    const APP_STATE = {
+      user: null, // firebase user
+      route: "login", // "login" | "home" | "secbrain" | "schedule" | "links" | "diary" | "amtak" | "log" | nested states
+      // nested context
+      secbrain: {
+        topicId: null,
+        folderId: null,
+        codeId: null,
+        bundleId: null
+      },
+      schedule: {
+        view: "menu", // "menu" | "subjadual" | "jadual" | "planning"
+        day: null,
+        subCodeId: null,
+        selectedActivityId: null
+      },
+      diary: {
+        dateId: null,
+        timeOfDay: null,
+        titleId: null
+      },
+      links: {
+        linkId: null
+      },
+      log: {
+        filterDay: null
+      }
+    };
+
+    // Simple helper: render
+    function setRoute(route, extra = {}) {
+      APP_STATE.route = route;
+      if (extra && typeof extra === "object") {
+        if (extra.secbrain) Object.assign(APP_STATE.secbrain, extra.secbrain);
+        if (extra.schedule) Object.assign(APP_STATE.schedule, extra.schedule);
+        if (extra.diary) Object.assign(APP_STATE.diary, extra.diary);
+        if (extra.links) Object.assign(APP_STATE.links, extra.links);
+        if (extra.log) Object.assign(APP_STATE.log, extra.log);
+      }
+      render();
+    }
+
+    function el(tag, options = {}) {
+      const node = document.createElement(tag);
+      if (options.className) node.className = options.className;
+      if (options.text) node.textContent = options.text;
+      if (options.html) node.innerHTML = options.html;
+      if (options.attrs) {
+        for (const [k, v] of Object.entries(options.attrs)) {
+          node.setAttribute(k, v);
+        }
+      }
+      if (options.on) {
+        for (const [event, handler] of Object.entries(options.on)) {
+          node.addEventListener(event, handler);
+        }
+      }
+      return node;
+    }
+
+    function showTopBarButtons() {
+      if (APP_STATE.user) {
+        btnLogout.classList.remove("hidden");
+        btnLogView.classList.remove("hidden");
+      } else {
+        btnLogout.classList.add("hidden");
+        btnLogView.classList.add("hidden");
+      }
+    }
+
+    btnLogout.addEventListener("click", async () => {
+      try {
+        await auth.signOut();
+      } catch (err) {
+        alert("Gagal logout: " + err.message);
+      }
+    });
+
+    btnLogView.addEventListener("click", () => {
+      setRoute("log");
+    });
+
+    auth.onAuthStateChanged((user) => {
+      APP_STATE.user = user;
+      showTopBarButtons();
+      if (user) {
+        // pergi ke home
+        if (APP_STATE.route === "login") {
+          setRoute("home");
+        } else {
+          render();
+        }
+      } else {
+        setRoute("login");
+      }
+    });
+
+    // Placeholder render (akan sambung di PART 2+)
+    function render() {
+      spaRoot.innerHTML = "";
+      if (!APP_STATE.user) {
+        renderLoginPage();
+        return;
+      }
+      switch (APP_STATE.route) {
+        case "home":
+          renderHomePage();
+          break;
+        case "secbrain":
+          renderSecBrainRoot();
+          break;
+        case "schedule":
+          renderScheduleRoot();
+          break;
+        case "links":
+          renderLinksRoot();
+          break;
+        case "diary":
+          renderDiaryRoot();
+          break;
+        case "amtak":
+          renderAmtakPage();
+          break;
+        case "log":
+          renderLogPage();
+          break;
+        default:
+          renderHomePage();
+      }
+    }
+  </script>
+  <script>
+    // ... semua dari PART 1 di atas ...
+
+    // =========================
+    // LOGIN PAGE
+    // =========================
+    function renderLoginPage() {
+      const card = el("div", { className: "card center-col" });
+
+      const header = el("div", { className: "center-col" });
+      header.appendChild(
+        el("div", {
+          className: "card-title",
+          text: "Ibustress • Wan-Law"
+        })
+      );
+      header.appendChild(
+        el("div", {
+          className: "card-subtitle",
+          text: "Log masuk untuk simpan idea, jadual, link, diary & aktiviti."
+        })
+      );
+
+      const form = el("div", { className: "section", style: "width:100%;max-width:360px;" });
+
+      const emailInput = el("input", {
+        attrs: { type: "email", placeholder: "Email" }
+      });
+      const passInput = el("input", {
+        attrs: { type: "password", placeholder: "Katalaluan" }
+      });
+      const errorBox = el("div", { className: "error-banner hidden" });
+
+      const btnRow = el("div", { className: "stack-h" });
+      const btnLoginEmail = el("button", {
+        className: "btn btn-full",
+        text: "Log Masuk (Email & Kata Laluan)"
+      });
+      const btnRegister = el("button", {
+        className: "btn btn-full btn-ghost",
+        text: "Daftar Akaun Baru"
+      });
+
+      btnRow.appendChild(btnLoginEmail);
+      btnRow.appendChild(btnRegister);
+
+      const btnGoogle = el("button", {
+        className: "btn btn-full mt-2",
+        text: "Log Masuk dengan Google"
+      });
+
+      btnLoginEmail.addEventListener("click", async () => {
+        errorBox.classList.add("hidden");
+        try {
+          const email = emailInput.value.trim();
+          const pass = passInput.value.trim();
+          if (!email || !pass) {
+            throw new Error("Sila isi email dan katalaluan.");
+          }
+          await auth.signInWithEmailAndPassword(email, pass);
+        } catch (err) {
+          errorBox.textContent = err.message;
+          errorBox.classList.remove("hidden");
+        }
+      });
+
+      btnRegister.addEventListener("click", async () => {
+        errorBox.classList.add("hidden");
+        try {
+          const email = emailInput.value.trim();
+          const pass = passInput.value.trim();
+          if (!email || !pass) {
+            throw new Error("Sila isi email dan katalaluan untuk daftar.");
+          }
+          await auth.createUserWithEmailAndPassword(email, pass);
+        } catch (err) {
+          errorBox.textContent = err.message;
+          errorBox.classList.remove("hidden");
+        }
+      });
+
+      btnGoogle.addEventListener("click", async () => {
+        errorBox.classList.add("hidden");
+        try {
+          const provider = new firebase.auth.GoogleAuthProvider();
+          await auth.signInWithPopup(provider);
+        } catch (err) {
+          errorBox.textContent = err.message;
+          errorBox.classList.remove("hidden");
+        }
+      });
+
+      form.appendChild(errorBox);
+      form.appendChild(emailInput);
+      form.appendChild(passInput);
+      form.appendChild(btnRow);
+      form.appendChild(btnGoogle);
+
+      card.appendChild(header);
+      card.appendChild(el("div", { className: "divider" }));
+      card.appendChild(form);
+
+      spaRoot.appendChild(card);
+    }
+
+    // =========================
+    // HOME PAGE (PAGE PILIHAN UTAMA)
+    // =========================
+    function renderHomePage() {
+      const card = el("div", { className: "card" });
+
+      const header = el("div", { className: "card-header" });
+      header.appendChild(
+        el("div", {
+          className: "card-title",
+          text: "Pilihan Utama"
+        })
+      );
+      header.appendChild(
+        el("div", {
+          className: "card-subtitle",
+          text: "Pilih modul yang ingin digunakan."
+        })
+      );
+      card.appendChild(header);
+      card.appendChild(el("div", { className: "divider" }));
+
+      const buttons = el("div", { className: "section" });
+
+      const btnSecBrain = el("button", {
+        className: "btn btn-full btn-pill",
+        text: "Wan Law Ft. SecBrain"
+      });
+      btnSecBrain.addEventListener("click", () => {
+        setRoute("secbrain", { secbrain: { topicId: null, folderId: null, codeId: null, bundleId: null } });
+      });
+
+      const btnSchedule = el("button", {
+        className: "btn btn-full btn-pill",
+        text: "Wan Law Ft. Schedule"
+      });
+      btnSchedule.addEventListener("click", () => {
+        setRoute("schedule", {
+          schedule: {
+            view: "menu",
+            day: null,
+            subCodeId: null,
+            selectedActivityId: null
+          }
+        });
+      });
+
+      const btnLinks = el("button", {
+        className: "btn btn-full btn-pill",
+        text: "Wan Law Ft. Link"
+      });
+      btnLinks.addEventListener("click", () => {
+        setRoute("links", { links: { linkId: null } });
+      });
+
+      const btnDiary = el("button", {
+        className: "btn btn-full btn-pill",
+        text: "Wan Law Ft. Diary"
+      });
+      btnDiary.addEventListener("click", () => {
+        setRoute("diary", { diary: { dateId: null, timeOfDay: null, titleId: null } });
+      });
+
+      const btnAmtak = el("button", {
+        className: "btn btn-full btn-pill",
+        text: "Wan Law Ft. AMT.AK"
+      });
+      btnAmtak.addEventListener("click", () => {
+        setRoute("amtak");
+      });
+
+      buttons.appendChild(btnSecBrain);
+      buttons.appendChild(btnSchedule);
+      buttons.appendChild(btnLinks);
+      buttons.appendChild(btnDiary);
+      buttons.appendChild(btnAmtak);
+
+      card.appendChild(buttons);
+      spaRoot.appendChild(card);
+    }
+
+    // =========================
+    // LOG SEJARAH PAGE (RANGKA)
+    // =========================
+    async function fetchLogsForUser() {
+      if (!APP_STATE.user) return [];
+      const snap = await db
+        .collection("users")
+        .doc(APP_STATE.user.uid)
+        .collection("schedule_logs")
+        .orderBy("timestamp", "desc")
+        .limit(200)
+        .get();
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    }
+
+    async function renderLogPage() {
+      const card = el("div", { className: "card" });
+
+      const header = el("div", { className: "card-header" });
+      header.appendChild(
+        el("div", {
+          className: "card-title",
+          text: "Log Sejarah Aktiviti"
+        })
+      );
+      const backBtn = el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali"
+      });
+      backBtn.addEventListener("click", () => {
+        setRoute("home");
+      });
+      header.appendChild(backBtn);
+      card.appendChild(header);
+
+      card.appendChild(
+        el("div", {
+          className: "section-note",
+          text: "Setiap kali slot aktiviti ditanda selesai, rekod akan muncul di sini (nama aktiviti, masa, hari, tarikh, tahun)."
+        })
+      );
+      card.appendChild(el("div", { className: "divider" }));
+
+      const container = el("div", { className: "section scroll-y", style: "max-height:60vh;" });
+      const loading = el("div", {
+        className: "text-xs muted",
+        text: "Memuatkan log..."
+      });
+      container.appendChild(loading);
+
+      card.appendChild(container);
+      spaRoot.appendChild(card);
+
+      try {
+        const logs = await fetchLogsForUser();
+        container.innerHTML = "";
+        if (!logs.length) {
+          container.appendChild(
+            el("div", {
+              className: "text-xs muted",
+              text: "Tiada log lagi. Pergi ke page Jadual, pilih aktiviti dan tandakan slot sebagai selesai."
+            })
+          );
+          return;
+        }
+
+        logs.forEach((log) => {
+          const item = el("div", { className: "list-item" });
+          const header = el("div", { className: "list-item-header" });
+          header.appendChild(
+            el("div", {
+              className: "list-item-title",
+              text: log.activityName || "Aktiviti tanpa nama"
+            })
+          );
+          header.appendChild(
+            el("div", {
+              className: "badge",
+              text: log.dayName || "-"
+            })
+          );
+          item.appendChild(header);
+          const meta = el("div", { className: "list-item-meta" });
+          meta.appendChild(el("span", { text: log.dateString || "" }));
+          meta.appendChild(
+            el("span", {
+              text: log.timeString || ""
+            })
+          );
+          if (log.slotNumber != null) {
+            meta.appendChild(
+              el("span", {
+                text: "Slot " + log.slotNumber
+              })
+            );
+          }
+          item.appendChild(meta);
+          container.appendChild(item);
+        });
+      } catch (err) {
+        container.innerHTML = "";
+        container.appendChild(
+          el("div", {
+            className: "error-banner",
+            text: "Gagal memuatkan log: " + err.message
+          })
+        );
+      }
+    }
+  </script>
+  <script>
+    // ... sambungan sebelum ini ...
+
+    // =========================
+    // SECBRAIN FIRESTORE PATH HELPERS
+    // =========================
+    function userDoc() {
+      return db.collection("users").doc(APP_STATE.user.uid);
+    }
+
+    function secbrainTopicsCol() {
+      return userDoc().collection("secbrain_topics");
+    }
+
+    function secbrainTopicFoldersCol(topicId) {
+      return secbrainTopicsCol().doc(topicId).collection("folders");
+    }
+
+    function secbrainFolderCodesCol(topicId, folderId) {
+      return secbrainTopicFoldersCol(topicId).doc(folderId).collection("codes");
+    }
+
+    function secbrainCodeBundlesCol(topicId, folderId, codeId) {
+      return secbrainFolderCodesCol(topicId, folderId).doc(codeId).collection("bundles");
+    }
+
+    // =========================
+    // SECBRAIN ROOT PAGE
+    // =========================
+    async function renderSecBrainRoot() {
+      const card = el("div", { className: "card" });
+
+      const header = el("div", { className: "card-header" });
+      const left = el("div", { className: "stack-v" });
+      left.appendChild(
+        el("div", {
+          className: "card-title",
+          text: "Wan Law Ft. SecBrain"
+        })
+      );
+      left.appendChild(
+        el("div", {
+          className: "card-subtitle",
+          text: "Tempat catat idea spontan."
+        })
+      );
+      header.appendChild(left);
+
+      const backBtn = el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali"
+      });
+      backBtn.addEventListener("click", () => {
+        setRoute("home");
+      });
+      header.appendChild(backBtn);
+
+      card.appendChild(header);
+      card.appendChild(el("div", { className: "divider" }));
+
+      const searchInput = el("input", {
+        attrs: { type: "search", placeholder: "Cari Topik mengikut nama..." }
+      });
+
+      const addBtn = el("button", {
+        className: "btn btn-full mt-2",
+        text: "Tambah Topik Idea Spontan"
+      });
+
+      const listContainer = el("div", {
+        className: "section scroll-y",
+        style: "max-height: 60vh;"
+      });
+
+      card.appendChild(searchInput);
+      card.appendChild(addBtn);
+      card.appendChild(el("div", { className: "divider" }));
+      card.appendChild(listContainer);
+
+      spaRoot.appendChild(card);
+
+      addBtn.addEventListener("click", async () => {
+        const name = prompt("Nama Topik:");
+        if (!name) return;
+        try {
+          await secbrainTopicsCol().add({
+            name,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          renderSecBrainRoot();
+        } catch (err) {
+          alert("Gagal tambah topik: " + err.message);
+        }
+      });
+
+      async function loadTopics() {
+        listContainer.innerHTML = "";
+        const loading = el("div", {
+          className: "text-xs muted",
+          text: "Memuatkan topik..."
+        });
+        listContainer.appendChild(loading);
+
+        try {
+          const snap = await secbrainTopicsCol().orderBy("createdAt", "desc").get();
+          listContainer.innerHTML = "";
+
+          const filter = searchInput.value.trim().toLowerCase();
+          const docs = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((t) =>
+              filter ? (t.name || "").toLowerCase().includes(filter) : true
+            );
+
+          if (!docs.length) {
+            listContainer.appendChild(
+              el("div", {
+                className: "text-xs muted",
+                text: "Tiada topik. Tambah topik baharu."
+              })
+            );
+            return;
+          }
+
+          docs.forEach((topic) => {
+            const item = el("div", { className: "list-item" });
+
+            const header = el("div", { className: "list-item-header" });
+            const title = el("div", {
+              className: "list-item-title",
+              text: topic.name || "(Tiada nama)"
+            });
+            header.appendChild(title);
+
+            const actions = el("div", { className: "list-item-actions" });
+
+            const btnEdit = el("button", {
+              className: "btn btn-xs btn-ghost",
+              text: "Sunting"
+            });
+            btnEdit.style.fontSize = "10px";
+            btnEdit.style.padding = "2px 6px";
+
+            const btnDelete = el("button", {
+              className: "btn btn-xs btn-ghost",
+              text: "Padam"
+            });
+            btnDelete.style.fontSize = "10px";
+            btnDelete.style.padding = "2px 6px";
+            btnDelete.style.color = "#fecaca";
+            btnDelete.style.borderColor = "#fecaca";
+
+            actions.appendChild(btnEdit);
+            actions.appendChild(btnDelete);
+            header.appendChild(actions);
+            item.appendChild(header);
+
+            const meta = el("div", { className: "list-item-meta" });
+            meta.appendChild(
+              el("span", {
+                text: "Topik idea spontan"
+              })
+            );
+            item.appendChild(meta);
+
+            // klik utama = masuk ke Page Tambah Idea Spontan (folder)
+            item.addEventListener("click", (e) => {
+              if (e.target === btnEdit || e.target === btnDelete) return;
+              APP_STATE.secbrain.topicId = topic.id;
+              APP_STATE.secbrain.folderId = null;
+              APP_STATE.secbrain.codeId = null;
+              APP_STATE.secbrain.bundleId = null;
+              renderSecBrainFoldersPage();
+            });
+
+            btnEdit.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              const newName = prompt("Nama Topik baru:", topic.name || "");
+              if (!newName) return;
+              try {
+                await secbrainTopicsCol().doc(topic.id).update({ name: newName });
+                renderSecBrainRoot();
+              } catch (err) {
+                alert("Gagal sunting topik: " + err.message);
+              }
+            });
+
+            btnDelete.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              if (!confirm("Padam topik ini dan semua anaknya?")) return;
+              try {
+                await deleteSecbrainTopicDeep(topic.id);
+                renderSecBrainRoot();
+              } catch (err) {
+                alert("Gagal padam topik: " + err.message);
+              }
+            });
+
+            listContainer.appendChild(item);
+          });
+        } catch (err) {
+          listContainer.innerHTML = "";
+          listContainer.appendChild(
+            el("div", {
+              className: "error-banner",
+              text: "Gagal memuatkan topik: " + err.message
+            })
+          );
+        }
+      }
+
+      searchInput.addEventListener("input", () => loadTopics());
+      loadTopics();
+    }
+
+    async function deleteSecbrainTopicDeep(topicId) {
+      const foldersSnap = await secbrainTopicFoldersCol(topicId).get();
+      for (const fDoc of foldersSnap.docs) {
+        const folderId = fDoc.id;
+        const codesSnap = await secbrainFolderCodesCol(topicId, folderId).get();
+        for (const cDoc of codesSnap.docs) {
+          const codeId = cDoc.id;
+          const bundlesSnap = await secbrainCodeBundlesCol(
+            topicId,
+            folderId,
+            codeId
+          ).get();
+          const batch = db.batch();
+          bundlesSnap.docs.forEach((b) => batch.delete(b.ref));
+          await batch.commit();
+          await cDoc.ref.delete();
+        }
+        await fDoc.ref.delete();
+      }
+      await secbrainTopicsCol().doc(topicId).delete();
+    }
+
+    // =========================
+    // PAGE: Folders (Page Tambah idea spontan)
+    // =========================
+    async function renderSecBrainFoldersPage() {
+      const topicId = APP_STATE.secbrain.topicId;
+      if (!topicId) {
+        renderSecBrainRoot();
+        return;
+      }
+
+      const topicDoc = await secbrainTopicsCol().doc(topicId).get();
+      const topicName = topicDoc.exists ? topicDoc.data().name : "Topik";
+
+      const card = el("div", { className: "card" });
+
+      const header = el("div", { className: "card-header" });
+      const left = el("div", { className: "stack-v" });
+      left.appendChild(
+        el("div", {
+          className: "card-title",
+          text: topicName
+        })
+      );
+      left.appendChild(
+        el("div", {
+          className: "card-subtitle",
+          text: "Page Tambah Idea Spontan — Folder Idea."
+        })
+      );
+      header.appendChild(left);
+
+      const backBtn = el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali"
+      });
+      backBtn.addEventListener("click", () => {
+        renderSecBrainRoot();
+      });
+      header.appendChild(backBtn);
+
+      card.appendChild(header);
+      card.appendChild(el("div", { className: "divider" }));
+
+      const searchInput = el("input", {
+        attrs: {
+          type: "search",
+          placeholder: "Cari folder (guna tarikh / nama folder)..."
+        }
+      });
+
+      const addBtn = el("button", {
+        className: "btn btn-full mt-2",
+        text: "Tambah Folder Baharu"
+      });
+
+      const listContainer = el("div", {
+        className: "section scroll-y",
+        style: "max-height: 60vh;"
+      });
+
+      card.appendChild(searchInput);
+      card.appendChild(addBtn);
+      card.appendChild(el("div", { className: "divider" }));
+      card.appendChild(listContainer);
+
+      spaRoot.innerHTML = "";
+      spaRoot.appendChild(card);
+
+      addBtn.addEventListener("click", async () => {
+        const name = prompt("Nama Folder:");
+        if (!name) return;
+        try {
+          await secbrainTopicFoldersCol(topicId).add({
+            name,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          renderSecBrainFoldersPage();
+        } catch (err) {
+          alert("Gagal tambah folder: " + err.message);
+        }
+      });
+
+      async function loadFolders() {
+        listContainer.innerHTML = "";
+        const loading = el("div", {
+          className: "text-xs muted",
+          text: "Memuatkan folder..."
+        });
+        listContainer.appendChild(loading);
+
+        try {
+          const snap = await secbrainTopicFoldersCol(topicId)
+            .orderBy("createdAt", "desc")
+            .get();
+          listContainer.innerHTML = "";
+          const filter = searchInput.value.trim().toLowerCase();
+          const docs = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((f) =>
+              filter ? (f.name || "").toLowerCase().includes(filter) : true
+            );
+          if (!docs.length) {
+            listContainer.appendChild(
+              el("div", {
+                className: "text-xs muted",
+                text: "Tiada folder lagi. Tambah folder baharu."
+              })
+            );
+            return;
+          }
+
+          docs.forEach((folder) => {
+            const item = el("div", { className: "list-item" });
+            const header = el("div", { className: "list-item-header" });
+            header.appendChild(
+              el("div", {
+                className: "list-item-title",
+                text: folder.name || "(Tiada nama folder)"
+              })
+            );
+            const actions = el("div", { className: "list-item-actions" });
+
+            const btnEdit = el("button", {
+              className: "btn btn-xs btn-ghost",
+              text: "Sunting"
+            });
+            btnEdit.style.fontSize = "10px";
+            btnEdit.style.padding = "2px 6px";
+
+            const btnDelete = el("button", {
+              className: "btn btn-xs btn-ghost",
+              text: "Padam"
+            });
+            btnDelete.style.fontSize = "10px";
+            btnDelete.style.padding = "2px 6px";
+            btnDelete.style.color = "#fecaca";
+
+            actions.appendChild(btnEdit);
+            actions.appendChild(btnDelete);
+            header.appendChild(actions);
+            item.appendChild(header);
+
+            const meta = el("div", { className: "list-item-meta" });
+            meta.appendChild(
+              el("span", {
+                text: "Folder idea spontan"
+              })
+            );
+            item.appendChild(meta);
+
+            item.addEventListener("click", (e) => {
+              if (e.target === btnEdit || e.target === btnDelete) return;
+              APP_STATE.secbrain.folderId = folder.id;
+              APP_STATE.secbrain.codeId = null;
+              APP_STATE.secbrain.bundleId = null;
+              renderSecBrainCodesPage();
+            });
+
+            btnEdit.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              const newName = prompt(
+                "Nama Folder baru:",
+                folder.name || ""
+              );
+              if (!newName) return;
+              try {
+                await secbrainTopicFoldersCol(topicId)
+                  .doc(folder.id)
+                  .update({ name: newName });
+                renderSecBrainFoldersPage();
+              } catch (err) {
+                alert("Gagal sunting folder: " + err.message);
+              }
+            });
+
+            btnDelete.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              if (!confirm("Padam folder ini dan semua code + bundle di dalamnya?")) return;
+              try {
+                await deleteSecbrainFolderDeep(topicId, folder.id);
+                renderSecBrainFoldersPage();
+              } catch (err) {
+                alert("Gagal padam folder: " + err.message);
+              }
+            });
+
+            listContainer.appendChild(item);
+          });
+        } catch (err) {
+          listContainer.innerHTML = "";
+          listContainer.appendChild(
+            el("div", {
+              className: "error-banner",
+              text: "Gagal memuatkan folder: " + err.message
+            })
+          );
+        }
+      }
+
+      searchInput.addEventListener("input", () => loadFolders());
+      loadFolders();
+    }
+
+    async function deleteSecbrainFolderDeep(topicId, folderId) {
+      const codesSnap = await secbrainFolderCodesCol(topicId, folderId).get();
+      for (const cDoc of codesSnap.docs) {
+        const codeId = cDoc.id;
+        const bundlesSnap = await secbrainCodeBundlesCol(
+          topicId,
+          folderId,
+          codeId
+        ).get();
+        const batch = db.batch();
+        bundlesSnap.docs.forEach((b) => batch.delete(b.ref));
+        await batch.commit();
+        await cDoc.ref.delete();
+      }
+      await secbrainTopicFoldersCol(topicId).doc(folderId).delete();
+    }
+
+    // =========================
+    // PAGE: Codes
+    // =========================
+    async function renderSecBrainCodesPage() {
+      const { topicId, folderId } = APP_STATE.secbrain;
+      if (!topicId || !folderId) {
+        renderSecBrainRoot();
+        return;
+      }
+      const folderDoc = await secbrainTopicFoldersCol(topicId)
+        .doc(folderId)
+        .get();
+      const folderName = folderDoc.exists ? folderDoc.data().name : "Folder";
+
+      const card = el("div", { className: "card" });
+
+      const header = el("div", { className: "card-header" });
+      const left = el("div", { className: "stack-v" });
+      left.appendChild(
+        el("div", {
+          className: "card-title",
+          text: folderName
+        })
+      );
+      left.appendChild(
+        el("div", {
+          className: "card-subtitle",
+          text: "Page Code — kumpulan untuk idea."
+        })
+      );
+      header.appendChild(left);
+
+      const backBtn = el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali"
+      });
+      backBtn.addEventListener("click", () => {
+        renderSecBrainFoldersPage();
+      });
+      header.appendChild(backBtn);
+
+      card.appendChild(header);
+      card.appendChild(el("div", { className: "divider" }));
+
+      const searchInput = el("input", {
+        attrs: {
+          type: "search",
+          placeholder: "Cari code..."
+        }
+      });
+
+      const addBtn = el("button", {
+        className: "btn btn-full mt-2",
+        text: "Tambah Code Baharu"
+      });
+
+      const listContainer = el("div", {
+        className: "section scroll-y",
+        style: "max-height: 60vh;"
+      });
+
+      card.appendChild(searchInput);
+      card.appendChild(addBtn);
+      card.appendChild(el("div", { className: "divider" }));
+      card.appendChild(listContainer);
+
+      spaRoot.innerHTML = "";
+      spaRoot.appendChild(card);
+
+      addBtn.addEventListener("click", async () => {
+        const name = prompt("Nama Code:");
+        if (!name) return;
+        try {
+          await secbrainFolderCodesCol(topicId, folderId).add({
+            name,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          renderSecBrainCodesPage();
+        } catch (err) {
+          alert("Gagal tambah code: " + err.message);
+        }
+      });
+
+      async function loadCodes() {
+        listContainer.innerHTML = "";
+        const loading = el("div", {
+          className: "text-xs muted",
+          text: "Memuatkan code..."
+        });
+        listContainer.appendChild(loading);
+
+        try {
+          const snap = await secbrainFolderCodesCol(topicId, folderId)
+            .orderBy("createdAt", "desc")
+            .get();
+          listContainer.innerHTML = "";
+          const filter = searchInput.value.trim().toLowerCase();
+
+          const docs = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((c) =>
+              filter ? (c.name || "").toLowerCase().includes(filter) : true
+            );
+          if (!docs.length) {
+            listContainer.appendChild(
+              el("div", {
+                className: "text-xs muted",
+                text: "Tiada code lagi. Tambah code baharu."
+              })
+            );
+            return;
+          }
+
+          docs.forEach((code) => {
+            const item = el("div", { className: "list-item" });
+            const header = el("div", { className: "list-item-header" });
+            header.appendChild(
+              el("div", {
+                className: "list-item-title",
+                text: code.name || "(Tiada nama code)"
+              })
+            );
+            const actions = el("div", { className: "list-item-actions" });
+
+            const btnEdit = el("button", {
+              className: "btn btn-xs btn-ghost",
+              text: "Sunting"
+            });
+            btnEdit.style.fontSize = "10px";
+            btnEdit.style.padding = "2px 6px";
+
+            const btnDelete = el("button", {
+              className: "btn btn-xs btn-ghost",
+              text: "Padam"
+            });
+            btnDelete.style.fontSize = "10px";
+            btnDelete.style.padding = "2px 6px";
+            btnDelete.style.color = "#fecaca";
+
+            actions.appendChild(btnEdit);
+            actions.appendChild(btnDelete);
+            header.appendChild(actions);
+            item.appendChild(header);
+
+            item.addEventListener("click", (e) => {
+              if (e.target === btnEdit || e.target === btnDelete) return;
+              APP_STATE.secbrain.codeId = code.id;
+              APP_STATE.secbrain.bundleId = null;
+              renderSecBrainBundlesPage();
+            });
+
+            btnEdit.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              const newName = prompt(
+                "Nama Code baru:",
+                code.name || ""
+              );
+              if (!newName) return;
+              try {
+                await secbrainFolderCodesCol(topicId, folderId)
+                  .doc(code.id)
+                  .update({ name: newName });
+                renderSecBrainCodesPage();
+              } catch (err) {
+                alert("Gagal sunting code: " + err.message);
+              }
+            });
+
+            btnDelete.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              if (!confirm("Padam code ini dan semua bundle di dalamnya?")) return;
+              try {
+                const bundlesSnap = await secbrainCodeBundlesCol(
+                  topicId,
+                  folderId,
+                  code.id
+                ).get();
+                const batch = db.batch();
+                bundlesSnap.docs.forEach((b) => batch.delete(b.ref));
+                await batch.commit();
+                await secbrainFolderCodesCol(topicId, folderId)
+                  .doc(code.id)
+                  .delete();
+                renderSecBrainCodesPage();
+              } catch (err) {
+                alert("Gagal padam code: " + err.message);
+              }
+            });
+
+            listContainer.appendChild(item);
+          });
+        } catch (err) {
+          listContainer.innerHTML = "";
+          listContainer.appendChild(
+            el("div", {
+              className: "error-banner",
+              text: "Gagal memuatkan code: " + err.message
+            })
+          );
+        }
+      }
+
+      searchInput.addEventListener("input", () => loadCodes());
+      loadCodes();
+    }
+
+    // =========================
+    // PAGE: Bundles LIST (Page Tambah Elemen Bundle)
+    // =========================
+    async function renderSecBrainBundlesPage() {
+      const { topicId, folderId, codeId } = APP_STATE.secbrain;
+      if (!topicId || !folderId || !codeId) {
+        renderSecBrainRoot();
+        return;
+      }
+
+      const codeDoc = await secbrainFolderCodesCol(topicId, folderId)
+        .doc(codeId)
+        .get();
+      const codeName = codeDoc.exists ? codeDoc.data().name : "Code";
+
+      const card = el("div", { className: "card" });
+
+      const header = el("div", { className: "card-header" });
+      const left = el("div", { className: "stack-v" });
+      left.appendChild(
+        el("div", {
+          className: "card-title",
+          text: codeName
+        })
+      );
+      left.appendChild(
+        el("div", {
+          className: "card-subtitle",
+          text: 'Page "Tambah bundle" — kumpulan bundle idea.'
+        })
+      );
+      header.appendChild(left);
+
+      const backBtn = el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali"
+      });
+      backBtn.addEventListener("click", () => {
+        renderSecBrainCodesPage();
+      });
+      header.appendChild(backBtn);
+
+      card.appendChild(header);
+      card.appendChild(el("div", { className: "divider" }));
+
+      const addBtn = el("button", {
+        className: "btn btn-full",
+        text: "Tambah bundle"
+      });
+
+      const listContainer = el("div", {
+        className: "section scroll-y",
+        style: "max-height: 60vh;"
+      });
+
+      card.appendChild(addBtn);
+      card.appendChild(el("div", { className: "divider" }));
+      card.appendChild(listContainer);
+
+      spaRoot.innerHTML = "";
+      spaRoot.appendChild(card);
+
+      addBtn.addEventListener("click", async () => {
+        const name = prompt("Nama bundle:");
+        if (!name) return;
+        try {
+          await secbrainCodeBundlesCol(topicId, folderId, codeId).add({
+            name,
+            ideaSpontan: "",
+            source: "",
+            estimateWhen: "",
+            note: "",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          renderSecBrainBundlesPage();
+        } catch (err) {
+          alert("Gagal tambah bundle: " + err.message);
+        }
+      });
+
+      async function loadBundles() {
+        listContainer.innerHTML = "";
+        const loading = el("div", {
+          className: "text-xs muted",
+          text: "Memuatkan bundle..."
+        });
+        listContainer.appendChild(loading);
+
+        try {
+          const snap = await secbrainCodeBundlesCol(
+            topicId,
+            folderId,
+            codeId
+          )
+            .orderBy("createdAt", "desc")
+            .get();
+          listContainer.innerHTML = "";
+
+          const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          if (!docs.length) {
+            listContainer.appendChild(
+              el("div", {
+                className: "text-xs muted",
+                text: "Tiada bundle lagi. Tambah bundle."
+              })
+            );
+            return;
+          }
+
+          docs.forEach((bundle) => {
+            const item = el("div", { className: "list-item" });
+
+            const header = el("div", { className: "list-item-header" });
+            header.appendChild(
+              el("div", {
+                className: "list-item-title",
+                text: bundle.name || "(Bundle tanpa nama)"
+              })
+            );
+            const actions = el("div", { className: "list-item-actions" });
+
+            const btnEdit = el("button", {
+              className: "btn btn-xs btn-ghost",
+              text: "Sunting nama"
+            });
+            btnEdit.style.fontSize = "10px";
+            btnEdit.style.padding = "2px 6px";
+
+            const btnDelete = el("button", {
+              className: "btn btn-xs btn-ghost",
+              text: "Padam"
+            });
+            btnDelete.style.fontSize = "10px";
+            btnDelete.style.padding = "2px 6px";
+            btnDelete.style.color = "#fecaca";
+
+            actions.appendChild(btnEdit);
+            actions.appendChild(btnDelete);
+            header.appendChild(actions);
+            item.appendChild(header);
+
+            item.addEventListener("click", (e) => {
+              if (e.target === btnEdit || e.target === btnDelete) return;
+              APP_STATE.secbrain.bundleId = bundle.id;
+              renderSecBrainBundleDetailPage();
+            });
+
+            btnEdit.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              const newName = prompt(
+                "Nama bundle baru:",
+                bundle.name || ""
+              );
+              if (!newName) return;
+              try {
+                await secbrainCodeBundlesCol(
+                  topicId,
+                  folderId,
+                  codeId
+                )
+                  .doc(bundle.id)
+                  .update({ name: newName });
+                renderSecBrainBundlesPage();
+              } catch (err) {
+                alert("Gagal sunting bundle: " + err.message);
+              }
+            });
+
+            btnDelete.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              if (!confirm("Padam bundle ini?")) return;
+              try {
+                await secbrainCodeBundlesCol(
+                  topicId,
+                  folderId,
+                  codeId
+                )
+                  .doc(bundle.id)
+                  .delete();
+                renderSecBrainBundlesPage();
+              } catch (err) {
+                alert("Gagal padam bundle: " + err.message);
+              }
+            });
+
+            listContainer.appendChild(item);
+          });
+        } catch (err) {
+          listContainer.innerHTML = "";
+          listContainer.appendChild(
+            el("div", {
+              className: "error-banner",
+              text: "Gagal memuatkan bundle: " + err.message
+            })
+          );
+        }
+      }
+
+      loadBundles();
+    }
+
+    // =========================
+    // PAGE: BUNDLE DETAIL (PAGE BUNDLE)
+    // =========================
+    async function renderSecBrainBundleDetailPage() {
+      const { topicId, folderId, codeId, bundleId } = APP_STATE.secbrain;
+      if (!topicId || !folderId || !codeId || !bundleId) {
+        renderSecBrainRoot();
+        return;
+      }
+
+      const docRef = secbrainCodeBundlesCol(topicId, folderId, codeId).doc(
+        bundleId
+      );
+      const docSnap = await docRef.get();
+      if (!docSnap.exists) {
+        alert("Bundle tidak ditemui.");
+        renderSecBrainBundlesPage();
+        return;
+      }
+      const data = docSnap.data();
+
+      const card = el("div", { className: "card" });
+
+      const header = el("div", { className: "card-header" });
+      header.appendChild(
+        el("div", {
+          className: "card-title",
+          text: data.name || "Bundle"
+        })
+      );
+      header.appendChild(
+        el("button", {
+          className: "btn btn-sm btn-ghost",
+          text: "Kembali",
+          on: {
+            click: () => {
+              renderSecBrainBundlesPage();
+            }
+          }
+        })
+      );
+      card.appendChild(header);
+      card.appendChild(el("div", { className: "divider" }));
+
+      // Elemen tetap:
+      // Idea spontan
+      // Tempat dapat idea spontan ini
+      // Anggaran bila untuk mewujudkan idea spontan ini
+      // Nota tambahan
+
+      const section = el("div", { className: "section" });
+
+      const ideaLabel = el("div", {
+        className: "section-title",
+        text: "Idea spontan"
+      });
+      const ideaInput = el("textarea");
+      ideaInput.value = data.ideaSpontan || "";
+
+      const sourceLabel = el("div", {
+        className: "section-title",
+        text: "Tempat dapat idea spontan ini"
+      });
+      const sourceInput = el("textarea");
+      sourceInput.value = data.source || "";
+
+      const whenLabel = el("div", {
+        className: "section-title",
+        text: "Anggaran bila untuk mewujudkan idea spontan ini"
+      });
+      const whenInput = el("textarea");
+      whenInput.value = data.estimateWhen || "";
+
+      const noteLabel = el("div", {
+        className: "section-title",
+        text: "Nota tambahan"
+      });
+      const noteInput = el("textarea");
+      noteInput.value = data.note || "";
+
+      section.appendChild(ideaLabel);
+      section.appendChild(ideaInput);
+      section.appendChild(sourceLabel);
+      section.appendChild(sourceInput);
+      section.appendChild(whenLabel);
+      section.appendChild(whenInput);
+      section.appendChild(noteLabel);
+      section.appendChild(noteInput);
+
+      const hint = el("div", {
+        className: "section-note",
+        text: "Perubahan disimpan automatik ke cloud (Firestore)."
+      });
+
+      card.appendChild(section);
+      card.appendChild(hint);
+
+      spaRoot.innerHTML = "";
+      spaRoot.appendChild(card);
+
+      let saveTimeout = null;
+      function scheduleSave() {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(async () => {
+          try {
+            await docRef.update({
+              ideaSpontan: ideaInput.value,
+              source: sourceInput.value,
+              estimateWhen: whenInput.value,
+              note: noteInput.value,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          } catch (err) {
+            console.error("Gagal auto-save bundle:", err);
+          }
+        }, 600);
+      }
+
+      [ideaInput, sourceInput, whenInput, noteInput].forEach((input) => {
+        input.addEventListener("input", scheduleSave);
+      });
+    }
+  </script>
+<script>
+  // =========================
+  // SCHEDULE ROOT PAGE (3.2)
+  // =========================
+  function renderScheduleRoot() {
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Wan Law Ft. Schedule"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => setRoute("home") }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const section = el("div", { className: "section" });
+
+    const btnSubJadual = el("button", {
+      className: "btn btn-full btn-pill",
+      text: "Sub‑Jadual"
+    });
+    btnSubJadual.addEventListener("click", () => {
+      APP_STATE.schedule.view = "subjadual";
+      renderScheduleSubJadual();
+    });
+
+    const btnJadual = el("button", {
+      className: "btn btn-full btn-pill",
+      text: "Jadual"
+    });
+    btnJadual.addEventListener("click", () => {
+      APP_STATE.schedule.view = "jadual";
+      renderScheduleJadualPage();
+    });
+
+    const btnPlanning = el("button", {
+      className: "btn btn-full btn-pill",
+      text: "Planning Aktiviti Masa Hadapan"
+    });
+    btnPlanning.addEventListener("click", () => {
+      APP_STATE.schedule.view = "planning";
+      renderSchedulePlanningRoot();
+    });
+
+    section.appendChild(btnSubJadual);
+    section.appendChild(btnJadual);
+    section.appendChild(btnPlanning);
+
+    card.appendChild(section);
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+  }
+
+  // =========================
+  // SUB-JADUAL PAGE (3.2a)
+  // =========================
+  function renderScheduleSubJadual() {
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Sub‑Jadual"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderScheduleRoot() }
+      })
+    );
+    card.appendChild(header);
+
+    card.appendChild(
+      el("div", {
+        className: "section-note",
+        text: "Page ini berfungsi sebagai tempat penerangan bagi page planner."
+      })
+    );
+    card.appendChild(el("div", { className: "divider" }));
+
+    const section = el("div", { className: "section" });
+
+    const days = [
+      ["isnin", "Maksud Isnin pada page Jadual"],
+      ["selasa", "Maksud Selasa pada page Jadual"],
+      ["rabu", "Maksud Rabu pada page Jadual"],
+      ["khamis", "Maksud Khamis pada page Jadual"],
+      ["jumaat", "Maksud Jumaat pada page Jadual"],
+      ["sabtu", "Maksud Sabtu pada page Jadual"],
+      ["ahad", "Maksud Ahad pada page Jadual"]
+    ];
+
+    days.forEach(([key, label]) => {
+      const btn = el("button", {
+        className: "btn btn-full btn-pill",
+        text: label
+      });
+      btn.addEventListener("click", () => {
+        APP_STATE.schedule.day = key;
+        renderScheduleSubHariPage();
+      });
+      section.appendChild(btn);
+    });
+
+    card.appendChild(section);
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+  }
+
+  // =========================
+  // SUB-HARI PAGE (3.2aa, 3.2ab, ...)
+  // =========================
+  async function renderScheduleSubHariPage() {
+    const day = APP_STATE.schedule.day;
+    if (!day) return renderScheduleSubJadual();
+
+    const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+
+    const docRef = userDoc().collection("schedule_subhari").doc(day);
+    const docSnap = await docRef.get();
+    const data = docSnap.exists ? docSnap.data() : { note: "" };
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Sub‑" + dayName
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderScheduleSubJadual() }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const noteLabel = el("div", {
+      className: "section-title",
+      text: "Nota Umum Hari " + dayName
+    });
+    const noteInput = el("textarea");
+    noteInput.value = data.note || "";
+
+    const btnAddCode = el("button", {
+      className: "btn btn-full mt-2",
+      text: "Tambah Code Sub‑" + dayName
+    });
+
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 50vh;"
+    });
+
+    card.appendChild(noteLabel);
+    card.appendChild(noteInput);
+    card.appendChild(btnAddCode);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    // Auto-save nota
+    let saveTimeout = null;
+    noteInput.addEventListener("input", () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        await docRef.set({ note: noteInput.value }, { merge: true });
+      }, 500);
+    });
+
+    // Tambah code
+    btnAddCode.addEventListener("click", async () => {
+      const name = prompt("Nama Code Sub‑" + dayName + ":");
+      if (!name) return;
+      await docRef.collection("codes").add({
+        name,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      renderScheduleSubHariPage();
+    });
+
+    // Load codes
+    async function loadCodes() {
+      const snap = await docRef.collection("codes").orderBy("createdAt", "desc").get();
+      listContainer.innerHTML = "";
+
+      if (snap.empty) {
+        listContainer.appendChild(
+          el("div", {
+            className: "text-xs muted",
+            text: "Tiada code lagi. Tambah code baharu."
+          })
+        );
+        return;
+      }
+
+      snap.forEach((c) => {
+        const code = { id: c.id, ...c.data() };
+        const item = el("div", { className: "list-item" });
+
+        const header = el("div", { className: "list-item-header" });
+        header.appendChild(
+          el("div", {
+            className: "list-item-title",
+            text: code.name
+          })
+        );
+
+        const actions = el("div", { className: "list-item-actions" });
+
+        const btnEdit = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Sunting"
+        });
+        btnEdit.style.fontSize = "10px";
+
+        const btnDelete = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Padam"
+        });
+        btnDelete.style.fontSize = "10px";
+        btnDelete.style.color = "#fecaca";
+
+        actions.appendChild(btnEdit);
+        actions.appendChild(btnDelete);
+        header.appendChild(actions);
+        item.appendChild(header);
+
+        item.addEventListener("click", (e) => {
+          if (e.target === btnEdit || e.target === btnDelete) return;
+          APP_STATE.schedule.subCodeId = code.id;
+          renderScheduleSenaraiAktivitiPage();
+        });
+
+        btnEdit.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const newName = prompt("Nama baru:", code.name);
+          if (!newName) return;
+          await docRef.collection("codes").doc(code.id).update({ name: newName });
+          renderScheduleSubHariPage();
+        });
+
+        btnDelete.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm("Padam code ini?")) return;
+          await docRef.collection("codes").doc(code.id).delete();
+          renderScheduleSubHariPage();
+        });
+
+        listContainer.appendChild(item);
+      });
+    }
+
+    loadCodes();
+  }
+</script>
+<script>
+  // =========================
+  // PAGE SENARAI AKTIVITI (3.2aa → Page Senarai Aktiviti)
+  // =========================
+  async function renderScheduleSenaraiAktivitiPage() {
+    const day = APP_STATE.schedule.day;
+    const subCodeId = APP_STATE.schedule.subCodeId;
+    if (!day || !subCodeId) return renderScheduleSubJadual();
+
+    const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+
+    const codeRef = userDoc()
+      .collection("schedule_subhari")
+      .doc(day)
+      .collection("codes")
+      .doc(subCodeId);
+
+    const codeSnap = await codeRef.get();
+    const codeName = codeSnap.exists ? codeSnap.data().name : "Code";
+
+    const card = el("div", { className: "card" });
+
+    // Header
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Code Sub‑" + dayName
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderScheduleSubHariPage() }
+      })
+    );
+    card.appendChild(header);
+
+    // Code name
+    card.appendChild(
+      el("div", {
+        className: "section-note",
+        text: "Code: " + codeName
+      })
+    );
+    card.appendChild(el("div", { className: "divider" }));
+
+    // Add activity button
+    const btnAdd = el("button", {
+      className: "btn btn-full",
+      text: "Tambah Aktiviti"
+    });
+
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
+
+    card.appendChild(btnAdd);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    // Add activity
+    btnAdd.addEventListener("click", async () => {
+      const name = prompt("Nama Aktiviti:");
+      if (!name) return;
+      await codeRef.collection("activities").add({
+        name,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      renderScheduleSenaraiAktivitiPage();
+    });
+
+    // Load activities
+    async function loadActivities() {
+      const snap = await codeRef
+        .collection("activities")
+        .orderBy("createdAt", "desc")
+        .get();
+
+      listContainer.innerHTML = "";
+
+      if (snap.empty) {
+        listContainer.appendChild(
+          el("div", {
+            className: "text-xs muted",
+            text: "Tiada aktiviti. Tambah aktiviti baharu."
+          })
+        );
+        return;
+      }
+
+      snap.forEach((a) => {
+        const act = { id: a.id, ...a.data() };
+
+        const item = el("div", { className: "list-item" });
+
+        const header = el("div", { className: "list-item-header" });
+        header.appendChild(
+          el("div", {
+            className: "list-item-title",
+            text: act.name
+          })
+        );
+
+        const actions = el("div", { className: "list-item-actions" });
+
+        const btnEdit = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Sunting"
+        });
+        btnEdit.style.fontSize = "10px";
+
+        const btnDelete = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Padam"
+        });
+        btnDelete.style.fontSize = "10px";
+        btnDelete.style.color = "#fecaca";
+
+        actions.appendChild(btnEdit);
+        actions.appendChild(btnDelete);
+        header.appendChild(actions);
+        item.appendChild(header);
+
+        // Edit
+        btnEdit.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const newName = prompt("Nama baru:", act.name);
+          if (!newName) return;
+          await codeRef.collection("activities").doc(act.id).update({
+            name: newName
+          });
+          renderScheduleSenaraiAktivitiPage();
+        });
+
+        // Delete
+        btnDelete.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm("Padam aktiviti ini?")) return;
+          await codeRef.collection("activities").doc(act.id).delete();
+          renderScheduleSenaraiAktivitiPage();
+        });
+
+        listContainer.appendChild(item);
+      });
+    }
+
+    loadActivities();
+  }
+</script>
+<script>
+  // =========================
+  // PAGE JADUAL (3.2b)
+  // =========================
+  async function renderScheduleJadualPage() {
+    const card = el("div", { className: "card" });
+
+    // Header
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Jadual Harian"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderScheduleRoot() }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    // =========================
+    // PILIH HARI
+    // =========================
+    const daySelect = el("select");
+    const days = ["isnin", "selasa", "rabu", "khamis", "jumaat", "sabtu", "ahad"];
+
+    daySelect.appendChild(el("option", { text: "Pilih Hari", attrs: { value: "" } }));
+
+    days.forEach((d) => {
+      const opt = el("option", {
+        text: d.charAt(0).toUpperCase() + d.slice(1),
+        attrs: { value: d }
+      });
+      if (APP_STATE.schedule.day === d) opt.selected = true;
+      daySelect.appendChild(opt);
+    });
+
+    daySelect.addEventListener("change", () => {
+      APP_STATE.schedule.day = daySelect.value;
+      APP_STATE.schedule.subCodeId = null;
+      APP_STATE.schedule.selectedActivityId = null;
+      renderScheduleJadualPage();
+    });
+
+    card.appendChild(daySelect);
+
+    // If no day selected → stop here
+    if (!APP_STATE.schedule.day) {
+      spaRoot.innerHTML = "";
+      spaRoot.appendChild(card);
+      return;
+    }
+
+    const day = APP_STATE.schedule.day;
+    const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+
+    // =========================
+    // PILIH CODE SUB-HARI
+    // =========================
+    const codeSelect = el("select");
+    codeSelect.appendChild(el("option", { text: "Pilih Code Sub‑" + dayName, attrs: { value: "" } }));
+
+    const codeRef = userDoc()
+      .collection("schedule_subhari")
+      .doc(day)
+      .collection("codes");
+
+    const codeSnap = await codeRef.orderBy("createdAt", "desc").get();
+
+    codeSnap.forEach((c) => {
+      const code = { id: c.id, ...c.data() };
+      const opt = el("option", {
+        text: code.name,
+        attrs: { value: code.id }
+      });
+      if (APP_STATE.schedule.subCodeId === code.id) opt.selected = true;
+      codeSelect.appendChild(opt);
+    });
+
+    codeSelect.addEventListener("change", () => {
+      APP_STATE.schedule.subCodeId = codeSelect.value;
+      APP_STATE.schedule.selectedActivityId = null;
+      renderScheduleJadualPage();
+    });
+
+    card.appendChild(codeSelect);
+
+    // If no code selected → stop here
+    if (!APP_STATE.schedule.subCodeId) {
+      spaRoot.innerHTML = "";
+      spaRoot.appendChild(card);
+      return;
+    }
+
+    const subCodeId = APP_STATE.schedule.subCodeId;
+
+    // =========================
+    // PILIH AKTIVITI (LIBRARY)
+    // =========================
+    const actSelect = el("select");
+    actSelect.appendChild(el("option", { text: "Pilih Aktiviti", attrs: { value: "" } }));
+
+    const actSnap = await codeRef.doc(subCodeId).collection("activities").orderBy("createdAt", "desc").get();
+
+    actSnap.forEach((a) => {
+      const act = { id: a.id, ...a.data() };
+      const opt = el("option", {
+        text: act.name,
+        attrs: { value: act.id }
+      });
+      if (APP_STATE.schedule.selectedActivityId === act.id) opt.selected = true;
+      actSelect.appendChild(opt);
+    });
+
+    actSelect.addEventListener("change", () => {
+      APP_STATE.schedule.selectedActivityId = actSelect.value;
+      renderScheduleJadualPage();
+    });
+
+    card.appendChild(actSelect);
+
+    // =========================
+    // SLOT 1–100
+    // =========================
+    const slotContainer = el("div", { className: "schedule-grid mt-3" });
+
+    const slotRef = userDoc().collection("schedule_slots").doc(day);
+
+    let slotData = {};
+    const slotSnap = await slotRef.get();
+    if (slotSnap.exists) slotData = slotSnap.data();
+
+    for (let i = 1; i <= 100; i++) {
+      const slot = el("div", { className: "slot" });
+
+      const header = el("div", { className: "slot-header" });
+      header.appendChild(el("div", { className: "slot-number", text: "#" + i }));
+
+      const checkbox = el("input", {
+        attrs: { type: "checkbox" },
+        className: "slot-checkbox"
+      });
+
+      // If slot already completed
+      if (slotData[i] && slotData[i].done) checkbox.checked = true;
+
+      header.appendChild(checkbox);
+      slot.appendChild(header);
+
+      const actName = slotData[i] ? slotData[i].name : "";
+      const actDiv = el("div", { className: "slot-activity", text: actName });
+      slot.appendChild(actDiv);
+
+      // Klik slot → masukkan aktiviti
+      slot.addEventListener("click", async (e) => {
+        if (e.target === checkbox) return;
+
+        if (!APP_STATE.schedule.selectedActivityId) {
+          alert("Sila pilih aktiviti dahulu.");
+          return;
+        }
+
+        const selectedAct = actSnap.docs.find((d) => d.id === APP_STATE.schedule.selectedActivityId);
+        if (!selectedAct) return;
+
+        const name = selectedAct.data().name;
+
+        await slotRef.set(
+          {
+            [i]: {
+              name,
+              activityId: selectedAct.id,
+              done: false
+            }
+          },
+          { merge: true }
+        );
+
+        renderScheduleJadualPage();
+      });
+
+      // Tick checkbox → simpan log
+      checkbox.addEventListener("change", async () => {
+        const done = checkbox.checked;
+
+        await slotRef.set(
+          {
+            [i]: {
+              ...(slotData[i] || {}),
+              done
+            }
+          },
+          { merge: true }
+        );
+
+        if (done) {
+          await saveScheduleLog({
+            dayName,
+            slotNumber: i,
+            activityName: actName
+          });
+        }
+      });
+
+      slotContainer.appendChild(slot);
+    }
+
+    card.appendChild(slotContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+  }
+
+  // =========================
+  // SIMPAN LOG SEJARAH
+  // =========================
+  async function saveScheduleLog({ dayName, slotNumber, activityName }) {
+    const now = new Date();
+    const dateString = now.toLocaleDateString("ms-MY");
+    const timeString = now.toLocaleTimeString("ms-MY");
+
+    await userDoc().collection("schedule_logs").add({
+      dayName,
+      slotNumber,
+      activityName,
+      dateString,
+      timeString,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+</script>
+<script>
+  // =========================
+  // PLANNING ROOT PAGE (3.2c)
+  // =========================
+  async function renderSchedulePlanningRoot() {
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Planning Aktiviti Masa Hadapan"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderScheduleRoot() }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const btnAdd = el("button", {
+      className: "btn btn-full",
+      text: "Tambah Planning For Future"
+    });
+
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
+
+    card.appendChild(btnAdd);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    const planningRef = userDoc().collection("planning_future");
+
+    // Tambah folder planning
+    btnAdd.addEventListener("click", async () => {
+      const name = prompt("Nama Planning Folder:");
+      if (!name) return;
+      await planningRef.add({
+        name,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      renderSchedulePlanningRoot();
+    });
+
+    // Load folder planning
+    async function loadPlanning() {
+      const snap = await planningRef.orderBy("createdAt", "desc").get();
+      listContainer.innerHTML = "";
+
+      if (snap.empty) {
+        listContainer.appendChild(
+          el("div", {
+            className: "text-xs muted",
+            text: "Tiada planning. Tambah planning baharu."
+          })
+        );
+        return;
+      }
+
+      snap.forEach((p) => {
+        const folder = { id: p.id, ...p.data() };
+
+        const item = el("div", { className: "list-item" });
+
+        const header = el("div", { className: "list-item-header" });
+        header.appendChild(
+          el("div", {
+            className: "list-item-title",
+            text: folder.name
+          })
+        );
+
+        const actions = el("div", { className: "list-item-actions" });
+
+        const btnEdit = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Sunting"
+        });
+        btnEdit.style.fontSize = "10px";
+
+        const btnDelete = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Padam"
+        });
+        btnDelete.style.fontSize = "10px";
+        btnDelete.style.color = "#fecaca";
+
+        actions.appendChild(btnEdit);
+        actions.appendChild(btnDelete);
+        header.appendChild(actions);
+        item.appendChild(header);
+
+        // Klik → masuk page 3.2ca
+        item.addEventListener("click", (e) => {
+          if (e.target === btnEdit || e.target === btnDelete) return;
+          APP_STATE.schedule.planningFolderId = folder.id;
+          renderSchedulePlanningFolderPage();
+        });
+
+        // Edit
+        btnEdit.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const newName = prompt("Nama baru:", folder.name);
+          if (!newName) return;
+          await planningRef.doc(folder.id).update({ name: newName });
+          renderSchedulePlanningRoot();
+        });
+
+        // Delete
+        btnDelete.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm("Padam folder planning ini?")) return;
+
+          // Delete all children
+          const actSnap = await planningRef.doc(folder.id).collection("activities").get();
+          const batch = db.batch();
+          actSnap.docs.forEach((a) => batch.delete(a.ref));
+          await batch.commit();
+
+          await planningRef.doc(folder.id).delete();
+          renderSchedulePlanningRoot();
+        });
+
+        listContainer.appendChild(item);
+      });
+    }
+
+    loadPlanning();
+  }
+
+  // =========================
+  // PAGE 3.2ca — Senarai Aktiviti Dalam Planning Folder
+  // =========================
+  async function renderSchedulePlanningFolderPage() {
+    const folderId = APP_STATE.schedule.planningFolderId;
+    if (!folderId) return renderSchedulePlanningRoot();
+
+    const folderRef = userDoc().collection("planning_future").doc(folderId);
+    const folderSnap = await folderRef.get();
+    const folderName = folderSnap.exists ? folderSnap.data().name : "Planning";
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: folderName
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderSchedulePlanningRoot() }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const btnAdd = el("button", {
+      className: "btn btn-full",
+      text: "Tambah Planning Pada Masa Akan Datang"
+    });
+
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
+
+    card.appendChild(btnAdd);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    // Tambah aktiviti
+    btnAdd.addEventListener("click", async () => {
+      const name = prompt("Tajuk Aktiviti:");
+      if (!name) return;
+      await folderRef.collection("activities").add({
+        name,
+        info: "",
+        function: "",
+        subplanner: "",
+        estimateDate: "",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      renderSchedulePlanningFolderPage();
+    });
+
+    // Load aktiviti
+    async function loadActivities() {
+      const snap = await folderRef.collection("activities").orderBy("createdAt", "desc").get();
+      listContainer.innerHTML = "";
+
+      if (snap.empty) {
+        listContainer.appendChild(
+          el("div", {
+            className: "text-xs muted",
+            text: "Tiada aktiviti. Tambah aktiviti baharu."
+          })
+        );
+        return;
+      }
+
+      snap.forEach((a) => {
+        const act = { id: a.id, ...a.data() };
+
+        const item = el("div", { className: "list-item" });
+
+        const header = el("div", { className: "list-item-header" });
+        header.appendChild(
+          el("div", {
+            className: "list-item-title",
+            text: act.name
+          })
+        );
+
+        const actions = el("div", { className: "list-item-actions" });
+
+        const btnEdit = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Sunting"
+        });
+        btnEdit.style.fontSize = "10px";
+
+        const btnDelete = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Padam"
+        });
+        btnDelete.style.fontSize = "10px";
+        btnDelete.style.color = "#fecaca";
+
+        actions.appendChild(btnEdit);
+        actions.appendChild(btnDelete);
+        header.appendChild(actions);
+        item.appendChild(header);
+
+        // Klik → masuk page 3.2caa
+        item.addEventListener("click", (e) => {
+          if (e.target === btnEdit || e.target === btnDelete) return;
+          APP_STATE.schedule.planningActivityId = act.id;
+          renderSchedulePlanningActivityDetail();
+        });
+
+        // Edit
+        btnEdit.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const newName = prompt("Nama baru:", act.name);
+          if (!newName) return;
+          await folderRef.collection("activities").doc(act.id).update({ name: newName });
+          renderSchedulePlanningFolderPage();
+        });
+
+        // Delete
+        btnDelete.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm("Padam aktiviti ini?")) return;
+          await folderRef.collection("activities").doc(act.id).delete();
+          renderSchedulePlanningFolderPage();
+        });
+
+        listContainer.appendChild(item);
+      });
+    }
+
+    loadActivities();
+  }
+
+  // =========================
+  // PAGE 3.2caa — Maklumat Aktiviti (4 Elemen Tetap)
+  // =========================
+  async function renderSchedulePlanningActivityDetail() {
+    const folderId = APP_STATE.schedule.planningFolderId;
+    const actId = APP_STATE.schedule.planningActivityId;
+
+    if (!folderId || !actId) return renderSchedulePlanningRoot();
+
+    const actRef = userDoc()
+      .collection("planning_future")
+      .doc(folderId)
+      .collection("activities")
+      .doc(actId);
+
+    const actSnap = await actRef.get();
+    const data = actSnap.exists ? actSnap.data() : {};
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Maklumat Aktiviti"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderSchedulePlanningFolderPage() }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const section = el("div", { className: "section" });
+
+    // 1. Maklumat Aktiviti
+    section.appendChild(el("div", { className: "section-title", text: "Maklumat Aktiviti" }));
+    const infoInput = el("textarea");
+    infoInput.value = data.info || "";
+    section.appendChild(infoInput);
+
+    // 2. Fungsi Aktiviti
+    section.appendChild(el("div", { className: "section-title", text: "Fungsi Aktiviti" }));
+    const functionInput = el("textarea");
+    functionInput.value = data.function || "";
+    section.appendChild(functionInput);
+
+    // 3. Perancangan Subplanner
+    section.appendChild(el("div", { className: "section-title", text: "Perancangan Subplanner (Hari apa)" }));
+    const subplannerInput = el("textarea");
+    subplannerInput.value = data.subplanner || "";
+    section.appendChild(subplannerInput);
+
+    // 4. Tarikh Anggaran
+    section.appendChild(el("div", { className: "section-title", text: "Tarikh Anggaran Aktiviti" }));
+    const estimateInput = el("textarea");
+    estimateInput.value = data.estimateDate || "";
+    section.appendChild(estimateInput);
+
+    const hint = el("div", {
+      className: "section-note",
+      text: "Perubahan disimpan automatik ke cloud."
+    });
+
+    card.appendChild(section);
+    card.appendChild(hint);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    // Auto-save
+    let saveTimeout = null;
+    function autoSave() {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        await actRef.update({
+          info: infoInput.value,
+          function: functionInput.value,
+          subplanner: subplannerInput.value,
+          estimateDate: estimateInput.value,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }, 600);
+    }
+
+    [infoInput, functionInput, subplannerInput, estimateInput].forEach((input) => {
+      input.addEventListener("input", autoSave);
+    });
+  }
+</script>
+<script>
+  // =========================
+  // LINK ROOT PAGE (3.3)
+  // =========================
+  async function renderLinksRoot() {
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Wan Law Ft. Link"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => setRoute("home") }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const btnAdd = el("button", {
+      className: "btn btn-full",
+      text: "Tambah Link Baru"
+    });
+
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
+
+    card.appendChild(btnAdd);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    const linkRef = userDoc().collection("links");
+
+    // Tambah link
+    btnAdd.addEventListener("click", async () => {
+      const name = prompt("Nama / Tajuk Link:");
+      if (!name) return;
+      const url = prompt("Masukkan URL Link:");
+      if (!url) return;
+
+      await linkRef.add({
+        name,
+        url,
+        note: "",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      renderLinksRoot();
+    });
+
+    // Load link
+    async function loadLinks() {
+      const snap = await linkRef.orderBy("createdAt", "desc").get();
+      listContainer.innerHTML = "";
+
+      if (snap.empty) {
+        listContainer.appendChild(
+          el("div", {
+            className: "text-xs muted",
+            text: "Tiada link. Tambah link baharu."
+          })
+        );
+        return;
+      }
+
+      snap.forEach((l) => {
+        const link = { id: l.id, ...l.data() };
+
+        const item = el("div", { className: "list-item" });
+
+        const header = el("div", { className: "list-item-header" });
+        header.appendChild(
+          el("div", {
+            className: "list-item-title",
+            text: link.name
+          })
+        );
+
+        const actions = el("div", { className: "list-item-actions" });
+
+        const btnCopy = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Copy"
+        });
+        btnCopy.style.fontSize = "10px";
+
+        const btnEdit = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Sunting"
+        });
+        btnEdit.style.fontSize = "10px";
+
+        const btnDelete = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Padam"
+        });
+        btnDelete.style.fontSize = "10px";
+        btnDelete.style.color = "#fecaca";
+
+        actions.appendChild(btnCopy);
+        actions.appendChild(btnEdit);
+        actions.appendChild(btnDelete);
+        header.appendChild(actions);
+        item.appendChild(header);
+
+        // Klik → masuk page Maklumat Link
+        item.addEventListener("click", (e) => {
+          if (e.target === btnCopy || e.target === btnEdit || e.target === btnDelete) return;
+          APP_STATE.links.linkId = link.id;
+          renderLinkDetailPage();
+        });
+
+        // Copy
+        btnCopy.addEventListener("click", (e) => {
+          e.stopPropagation();
+          navigator.clipboard.writeText(link.url);
+          alert("Link disalin.");
+        });
+
+        // Edit
+        btnEdit.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const newName = prompt("Nama baru:", link.name);
+          if (!newName) return;
+          const newUrl = prompt("URL baru:", link.url);
+          if (!newUrl) return;
+
+          await linkRef.doc(link.id).update({
+            name: newName,
+            url: newUrl
+          });
+
+          renderLinksRoot();
+        });
+
+        // Delete
+        btnDelete.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm("Padam link ini?")) return;
+          await linkRef.doc(link.id).delete();
+          renderLinksRoot();
+        });
+
+        listContainer.appendChild(item);
+      });
+    }
+
+    loadLinks();
+  }
+
+  // =========================
+  // LINK DETAIL PAGE
+  // =========================
+  async function renderLinkDetailPage() {
+    const linkId = APP_STATE.links.linkId;
+    if (!linkId) return renderLinksRoot();
+
+    const linkRef = userDoc().collection("links").doc(linkId);
+    const snap = await linkRef.get();
+    const data = snap.exists ? snap.data() : {};
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Maklumat Link"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderLinksRoot() }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const urlLabel = el("div", { className: "section-title", text: "URL Link" });
+    const urlBox = el("input", { attrs: { type: "text", readonly: true }, });
+    urlBox.value = data.url || "";
+
+    const noteLabel = el("div", { className: "section-title", text: "Nota" });
+    const noteInput = el("textarea");
+    noteInput.value = data.note || "";
+
+    card.appendChild(urlLabel);
+    card.appendChild(urlBox);
+    card.appendChild(noteLabel);
+    card.appendChild(noteInput);
+
+    const hint = el("div", {
+      className: "section-note",
+      text: "Perubahan disimpan automatik."
+    });
+    card.appendChild(hint);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    // Auto-save
+    let saveTimeout = null;
+    noteInput.addEventListener("input", () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        await linkRef.update({
+          note: noteInput.value,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }, 600);
+    });
+  }
+</script>
+<script>
+  // =========================
+  // DIARY ROOT PAGE
+  // =========================
+  async function renderDiaryRoot() {
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Wan Law Ft. Diary"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => setRoute("home") }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const btnAdd = el("button", {
+      className: "btn btn-full",
+      text: "Tambah Hari & Tarikh"
+    });
+
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
+
+    card.appendChild(btnAdd);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    const diaryRef = userDoc().collection("diary");
+
+    // Tambah hari & tarikh
+    btnAdd.addEventListener("click", async () => {
+      const name = prompt("Masukkan Hari & Tarikh (contoh: Isnin 12/2/2025):");
+      if (!name) return;
+
+      await diaryRef.add({
+        name,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      renderDiaryRoot();
+    });
+
+    // Load hari & tarikh
+    async function loadDates() {
+      const snap = await diaryRef.orderBy("createdAt", "desc").get();
+      listContainer.innerHTML = "";
+
+      if (snap.empty) {
+        listContainer.appendChild(
+          el("div", {
+            className: "text-xs muted",
+            text: "Tiada catatan diary. Tambah hari & tarikh."
+          })
+        );
+        return;
+      }
+
+      snap.forEach((d) => {
+        const date = { id: d.id, ...d.data() };
+
+        const item = el("div", { className: "list-item" });
+
+        const header = el("div", { className: "list-item-header" });
+        header.appendChild(
+          el("div", {
+            className: "list-item-title",
+            text: date.name
+          })
+        );
+
+        const actions = el("div", { className: "list-item-actions" });
+
+        const btnEdit = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Sunting"
+        });
+        btnEdit.style.fontSize = "10px";
+
+        const btnDelete = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Padam"
+        });
+        btnDelete.style.fontSize = "10px";
+        btnDelete.style.color = "#fecaca";
+
+        actions.appendChild(btnEdit);
+        actions.appendChild(btnDelete);
+        header.appendChild(actions);
+        item.appendChild(header);
+
+        // Klik → Page Memilih Waktu
+        item.addEventListener("click", (e) => {
+          if (e.target === btnEdit || e.target === btnDelete) return;
+          APP_STATE.diary.dateId = date.id;
+          renderDiaryTimePage();
+        });
+
+        // Edit
+        btnEdit.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const newName = prompt("Nama baru:", date.name);
+          if (!newName) return;
+          await diaryRef.doc(date.id).update({ name: newName });
+          renderDiaryRoot();
+        });
+
+        // Delete
+        btnDelete.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm("Padam hari & tarikh ini beserta semua catatan?")) return;
+
+          // Delete all children
+          const timeSnap = await diaryRef.doc(date.id).collection("times").get();
+          for (const t of timeSnap.docs) {
+            const titleSnap = await t.ref.collection("titles").get();
+            const batch = db.batch();
+            titleSnap.docs.forEach((x) => batch.delete(x.ref));
+            await batch.commit();
+            await t.ref.delete();
+          }
+
+          await diaryRef.doc(date.id).delete();
+          renderDiaryRoot();
+        });
+
+        listContainer.appendChild(item);
+      });
+    }
+
+    loadDates();
+  }
+
+  // =========================
+  // PAGE MEMILIH WAKTU
+  // =========================
+  async function renderDiaryTimePage() {
+    const dateId = APP_STATE.diary.dateId;
+    if (!dateId) return renderDiaryRoot();
+
+    const dateRef = userDoc().collection("diary").doc(dateId);
+    const dateSnap = await dateRef.get();
+    const dateName = dateSnap.exists ? dateSnap.data().name : "Hari";
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: dateName
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderDiaryRoot() }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const times = ["Pagi", "Tengah Hari", "Petang", "Malam"];
+
+    const section = el("div", { className: "section" });
+
+    times.forEach((t) => {
+      const btn = el("button", {
+        className: "btn btn-full btn-pill",
+        text: t
+      });
+      btn.addEventListener("click", () => {
+        APP_STATE.diary.timeOfDay = t;
+        renderDiaryTitlePage();
+      });
+      section.appendChild(btn);
+    });
+
+    card.appendChild(section);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+  }
+
+  // =========================
+  // PAGE TAJUK
+  // =========================
+  async function renderDiaryTitlePage() {
+    const { dateId, timeOfDay } = APP_STATE.diary;
+    if (!dateId || !timeOfDay) return renderDiaryRoot();
+
+    const timeRef = userDoc()
+      .collection("diary")
+      .doc(dateId)
+      .collection("times")
+      .doc(timeOfDay);
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: timeOfDay
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderDiaryTimePage() }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const btnAdd = el("button", {
+      className: "btn btn-full",
+      text: "Tambah Tajuk"
+    });
+
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
+
+    card.appendChild(btnAdd);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    // Tambah tajuk
+    btnAdd.addEventListener("click", async () => {
+      const name = prompt("Nama Tajuk:");
+      if (!name) return;
+
+      await timeRef.collection("titles").add({
+        name,
+        content: "",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      renderDiaryTitlePage();
+    });
+
+    // Load tajuk
+    async function loadTitles() {
+      const snap = await timeRef.collection("titles").orderBy("createdAt", "desc").get();
+      listContainer.innerHTML = "";
+
+      if (snap.empty) {
+        listContainer.appendChild(
+          el("div", {
+            className: "text-xs muted",
+            text: "Tiada tajuk. Tambah tajuk baharu."
+          })
+        );
+        return;
+      }
+
+      snap.forEach((t) => {
+        const title = { id: t.id, ...t.data() };
+
+        const item = el("div", { className: "list-item" });
+
+        const header = el("div", { className: "list-item-header" });
+        header.appendChild(
+          el("div", {
+            className: "list-item-title",
+            text: title.name
+          })
+        );
+
+        const actions = el("div", { className: "list-item-actions" });
+
+        const btnEdit = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Sunting"
+        });
+        btnEdit.style.fontSize = "10px";
+
+        const btnDelete = el("button", {
+          className: "btn btn-xs btn-ghost",
+          text: "Padam"
+        });
+        btnDelete.style.fontSize = "10px";
+        btnDelete.style.color = "#fecaca";
+
+        actions.appendChild(btnEdit);
+        actions.appendChild(btnDelete);
+        header.appendChild(actions);
+        item.appendChild(header);
+
+        // Klik → Page Maklumat Diary
+        item.addEventListener("click", (e) => {
+          if (e.target === btnEdit || e.target === btnDelete) return;
+          APP_STATE.diary.titleId = title.id;
+          renderDiaryContentPage();
+        });
+
+        // Edit
+        btnEdit.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const newName = prompt("Nama baru:", title.name);
+          if (!newName) return;
+          await timeRef.collection("titles").doc(title.id).update({ name: newName });
+          renderDiaryTitlePage();
+        });
+
+        // Delete
+        btnDelete.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm("Padam tajuk ini?")) return;
+          await timeRef.collection("titles").doc(title.id).delete();
+          renderDiaryTitlePage();
+        });
+
+        listContainer.appendChild(item);
+      });
+    }
+
+    loadTitles();
+  }
+
+  // =========================
+  // PAGE MAKLUMAT DIARY
+  // =========================
+  async function renderDiaryContentPage() {
+    const { dateId, timeOfDay, titleId } = APP_STATE.diary;
+    if (!dateId || !timeOfDay || !titleId) return renderDiaryRoot();
+
+    const titleRef = userDoc()
+      .collection("diary")
+      .doc(dateId)
+      .collection("times")
+      .doc(timeOfDay)
+      .collection("titles")
+      .doc(titleId);
+
+    const snap = await titleRef.get();
+    const data = snap.exists ? snap.data() : {};
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Catatan"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => renderDiaryTitlePage() }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const textarea = el("textarea");
+    textarea.value = data.content || "";
+
+    card.appendChild(textarea);
+
+    const hint = el("div", {
+      className: "section-note",
+      text: "Auto‑save aktif."
+    });
+    card.appendChild(hint);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    // Auto-save
+    let saveTimeout = null;
+    textarea.addEventListener("input", () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        await titleRef.update({
+          content: textarea.value,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }, 600);
+    });
+  }
+</script>
+<script>
+  // =========================
+  // AMT-AK PAGE
+  // =========================
+  function renderAmtakPage() {
+    const card = el("div", { className: "card center-col" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "AMT-AK 🎧"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: { click: () => setRoute("home") }
+      })
+    );
+    card.appendChild(header);
+
+    card.appendChild(el("div", { className: "divider" }));
+
+    card.appendChild(
+      el("div", {
+        className: "section-note",
+        text: "Modul Transisi Kognitif: Durasi Audio ke Output Produktif"
+      })
+    );
+    card.appendChild(
+      el("div", {
+        className: "section-note",
+        text: "Input Audio Diskret: SuperSayaz.mp3"
+      })
+    );
+    card.appendChild(
+      el("div", {
+        className: "section-note",
+        text: "Sistem Sedia (Inisialisasi)"
+      })
+    );
+
+    const audio = new Audio("SuperSayaz.mp3");
+
+    const btnStart = el("button", {
+      className: "btn btn-full mt-3",
+      text: "MULA AKTIVASI STREAM"
+    });
+    const btnStop = el("button", {
+      className: "btn btn-full btn-ghost mt-2",
+      text: "HENTI INTERUPSI"
+    });
+
+    btnStart.addEventListener("click", () => {
+      audio.currentTime = 0;
+      audio.play();
+    });
+
+    btnStop.addEventListener("click", () => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+
+    card.appendChild(btnStart);
+    card.appendChild(btnStop);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+  }
+</script>
+  <!-- Semua kod HTML dan JS SPA kau di atas -->
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
+
