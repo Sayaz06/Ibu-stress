@@ -948,446 +948,226 @@
     }
   </script>
   <script>
-    // ... sambungan sebelum ini ...
+  // =========================
+  // SECBRAIN FIRESTORE PATH HELPERS
+  // =========================
+  function userDoc() {
+    return db.collection("users").doc(APP_STATE.user.uid);
+  }
 
-    // =========================
-    // SECBRAIN FIRESTORE PATH HELPERS
-    // =========================
-    function userDoc() {
-      return db.collection("users").doc(APP_STATE.user.uid);
-    }
+  function secbrainTopicsCol() {
+    return userDoc().collection("secbrain_topics");
+  }
 
-    function secbrainTopicsCol() {
-      return userDoc().collection("secbrain_topics");
-    }
+  function secbrainTopicFoldersCol(topicId) {
+    return secbrainTopicsCol().doc(topicId).collection("folders");
+  }
 
-    function secbrainTopicFoldersCol(topicId) {
-      return secbrainTopicsCol().doc(topicId).collection("folders");
-    }
+  function secbrainFolderCodesCol(topicId, folderId) {
+    return secbrainTopicFoldersCol(topicId).doc(folderId).collection("codes");
+  }
 
-    function secbrainFolderCodesCol(topicId, folderId) {
-      return secbrainTopicFoldersCol(topicId).doc(folderId).collection("codes");
-    }
+  function secbrainCodeBundlesCol(topicId, folderId, codeId) {
+    return secbrainFolderCodesCol(topicId, folderId).doc(codeId).collection("bundles");
+  }
 
-    function secbrainCodeBundlesCol(topicId, folderId, codeId) {
-      return secbrainFolderCodesCol(topicId, folderId).doc(codeId).collection("bundles");
-    }
+  // =========================
+  // SECBRAIN ROOT PAGE (Topik)
+  // =========================
+  async function renderSecBrainRoot() {
+    const card = el("div", { className: "card" });
 
-    // =========================
-    // SECBRAIN ROOT PAGE
-    // =========================
-    async function renderSecBrainRoot() {
-      const card = el("div", { className: "card" });
+    const header = el("div", { className: "card-header" });
+    const left = el("div", { className: "stack-v" });
+    left.appendChild(
+      el("div", {
+        className: "card-title",
+        text: "Wan Law Ft. SecBrain"
+      })
+    );
+    left.appendChild(
+      el("div", {
+        className: "card-subtitle",
+        text: "Tempat catat idea spontan."
+      })
+    );
+    header.appendChild(left);
 
-      const header = el("div", { className: "card-header" });
-      const left = el("div", { className: "stack-v" });
-      left.appendChild(
-        el("div", {
-          className: "card-title",
-          text: "Wan Law Ft. SecBrain"
-        })
-      );
-      left.appendChild(
-        el("div", {
-          className: "card-subtitle",
-          text: "Tempat catat idea spontan."
-        })
-      );
-      header.appendChild(left);
+    const backBtn = el("button", {
+      className: "btn btn-sm btn-ghost",
+      text: "Kembali"
+    });
+    backBtn.addEventListener("click", () => {
+      setRoute("home");
+    });
+    header.appendChild(backBtn);
 
-      const backBtn = el("button", {
-        className: "btn btn-sm btn-ghost",
-        text: "Kembali"
-      });
-      backBtn.addEventListener("click", () => {
-        setRoute("home");
-      });
-      header.appendChild(backBtn);
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
 
-      card.appendChild(header);
-      card.appendChild(el("div", { className: "divider" }));
+    const searchInput = el("input", {
+      attrs: { type: "search", placeholder: "Cari Topik mengikut nama..." }
+    });
 
-      const searchInput = el("input", {
-        attrs: { type: "search", placeholder: "Cari Topik mengikut nama..." }
-      });
+    const addBtn = el("button", {
+      className: "btn btn-full mt-2",
+      text: "Tambah Topik Idea Spontan"
+    });
 
-      const addBtn = el("button", {
-        className: "btn btn-full mt-2",
-        text: "Tambah Topik Idea Spontan"
-      });
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
 
-      const listContainer = el("div", {
-        className: "section scroll-y",
-        style: "max-height: 60vh;"
-      });
+    card.appendChild(searchInput);
+    card.appendChild(addBtn);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
 
-      card.appendChild(searchInput);
-      card.appendChild(addBtn);
-      card.appendChild(el("div", { className: "divider" }));
-      card.appendChild(listContainer);
+    // PENTING: clear dulu sebelum render (elak page berganda)
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
 
-      spaRoot.appendChild(card);
-
-      addBtn.addEventListener("click", async () => {
-        const name = prompt("Nama Topik:");
-        if (!name) return;
-        try {
-          await secbrainTopicsCol().add({
-            name,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          renderSecBrainRoot();
-        } catch (err) {
-          alert("Gagal tambah topik: " + err.message);
-        }
-      });
-
-      async function loadTopics() {
-        listContainer.innerHTML = "";
-        const loading = el("div", {
-          className: "text-xs muted",
-          text: "Memuatkan topik..."
+    // Tambah topik
+    addBtn.addEventListener("click", async () => {
+      const name = prompt("Nama Topik:");
+      if (!name) return;
+      try {
+        await secbrainTopicsCol().add({
+          name,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        listContainer.appendChild(loading);
+        // reload list sahaja dengan panggil semula loadTopics()
+        loadTopics();
+      } catch (err) {
+        alert("Gagal tambah topik: " + err.message);
+      }
+    });
 
-        try {
-          const snap = await secbrainTopicsCol().orderBy("createdAt", "desc").get();
-          listContainer.innerHTML = "";
+    async function loadTopics() {
+      listContainer.innerHTML = "";
+      const loading = el("div", {
+        className: "text-xs muted",
+        text: "Memuatkan topik..."
+      });
+      listContainer.appendChild(loading);
 
-          const filter = searchInput.value.trim().toLowerCase();
-          const docs = snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }))
-            .filter((t) =>
-              filter ? (t.name || "").toLowerCase().includes(filter) : true
-            );
+      try {
+        const snap = await secbrainTopicsCol().orderBy("createdAt", "desc").get();
+        listContainer.innerHTML = "";
 
-          if (!docs.length) {
-            listContainer.appendChild(
-              el("div", {
-                className: "text-xs muted",
-                text: "Tiada topik. Tambah topik baharu."
-              })
-            );
-            return;
-          }
+        const filter = searchInput.value.trim().toLowerCase();
+        const docs = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((t) =>
+            filter ? (t.name || "").toLowerCase().includes(filter) : true
+          );
 
-          docs.forEach((topic) => {
-            const item = el("div", { className: "list-item" });
-
-            const header = el("div", { className: "list-item-header" });
-            const title = el("div", {
-              className: "list-item-title",
-              text: topic.name || "(Tiada nama)"
-            });
-            header.appendChild(title);
-
-            const actions = el("div", { className: "list-item-actions" });
-
-            const btnEdit = el("button", {
-              className: "btn btn-xs btn-ghost",
-              text: "Sunting"
-            });
-            btnEdit.style.fontSize = "10px";
-            btnEdit.style.padding = "2px 6px";
-
-            const btnDelete = el("button", {
-              className: "btn btn-xs btn-ghost",
-              text: "Padam"
-            });
-            btnDelete.style.fontSize = "10px";
-            btnDelete.style.padding = "2px 6px";
-            btnDelete.style.color = "#fecaca";
-            btnDelete.style.borderColor = "#fecaca";
-
-            actions.appendChild(btnEdit);
-            actions.appendChild(btnDelete);
-            header.appendChild(actions);
-            item.appendChild(header);
-
-            const meta = el("div", { className: "list-item-meta" });
-            meta.appendChild(
-              el("span", {
-                text: "Topik idea spontan"
-              })
-            );
-            item.appendChild(meta);
-
-            // klik utama = masuk ke Page Tambah Idea Spontan (folder)
-            item.addEventListener("click", (e) => {
-              if (e.target === btnEdit || e.target === btnDelete) return;
-              APP_STATE.secbrain.topicId = topic.id;
-              APP_STATE.secbrain.folderId = null;
-              APP_STATE.secbrain.codeId = null;
-              APP_STATE.secbrain.bundleId = null;
-              renderSecBrainFoldersPage();
-            });
-
-            btnEdit.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              const newName = prompt("Nama Topik baru:", topic.name || "");
-              if (!newName) return;
-              try {
-                await secbrainTopicsCol().doc(topic.id).update({ name: newName });
-                renderSecBrainRoot();
-              } catch (err) {
-                alert("Gagal sunting topik: " + err.message);
-              }
-            });
-
-            btnDelete.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              if (!confirm("Padam topik ini dan semua anaknya?")) return;
-              try {
-                await deleteSecbrainTopicDeep(topic.id);
-                renderSecBrainRoot();
-              } catch (err) {
-                alert("Gagal padam topik: " + err.message);
-              }
-            });
-
-            listContainer.appendChild(item);
-          });
-        } catch (err) {
-          listContainer.innerHTML = "";
+        if (!docs.length) {
           listContainer.appendChild(
             el("div", {
-              className: "error-banner",
-              text: "Gagal memuatkan topik: " + err.message
+              className: "text-xs muted",
+              text: "Tiada topik. Tambah topik baharu."
             })
           );
+          return;
         }
-      }
 
-      searchInput.addEventListener("input", () => loadTopics());
-      loadTopics();
-    }
+        docs.forEach((topic) => {
+          const item = el("div", { className: "list-item" });
 
-    async function deleteSecbrainTopicDeep(topicId) {
-      const foldersSnap = await secbrainTopicFoldersCol(topicId).get();
-      for (const fDoc of foldersSnap.docs) {
-        const folderId = fDoc.id;
-        const codesSnap = await secbrainFolderCodesCol(topicId, folderId).get();
-        for (const cDoc of codesSnap.docs) {
-          const codeId = cDoc.id;
-          const bundlesSnap = await secbrainCodeBundlesCol(
-            topicId,
-            folderId,
-            codeId
-          ).get();
-          const batch = db.batch();
-          bundlesSnap.docs.forEach((b) => batch.delete(b.ref));
-          await batch.commit();
-          await cDoc.ref.delete();
-        }
-        await fDoc.ref.delete();
-      }
-      await secbrainTopicsCol().doc(topicId).delete();
-    }
-
-    // =========================
-    // PAGE: Folders (Page Tambah idea spontan)
-    // =========================
-    async function renderSecBrainFoldersPage() {
-      const topicId = APP_STATE.secbrain.topicId;
-      if (!topicId) {
-        renderSecBrainRoot();
-        return;
-      }
-
-      const topicDoc = await secbrainTopicsCol().doc(topicId).get();
-      const topicName = topicDoc.exists ? topicDoc.data().name : "Topik";
-
-      const card = el("div", { className: "card" });
-
-      const header = el("div", { className: "card-header" });
-      const left = el("div", { className: "stack-v" });
-      left.appendChild(
-        el("div", {
-          className: "card-title",
-          text: topicName
-        })
-      );
-      left.appendChild(
-        el("div", {
-          className: "card-subtitle",
-          text: "Page Tambah Idea Spontan — Folder Idea."
-        })
-      );
-      header.appendChild(left);
-
-      const backBtn = el("button", {
-        className: "btn btn-sm btn-ghost",
-        text: "Kembali"
-      });
-      backBtn.addEventListener("click", () => {
-        renderSecBrainRoot();
-      });
-      header.appendChild(backBtn);
-
-      card.appendChild(header);
-      card.appendChild(el("div", { className: "divider" }));
-
-      const searchInput = el("input", {
-        attrs: {
-          type: "search",
-          placeholder: "Cari folder (guna tarikh / nama folder)..."
-        }
-      });
-
-      const addBtn = el("button", {
-        className: "btn btn-full mt-2",
-        text: "Tambah Folder Baharu"
-      });
-
-      const listContainer = el("div", {
-        className: "section scroll-y",
-        style: "max-height: 60vh;"
-      });
-
-      card.appendChild(searchInput);
-      card.appendChild(addBtn);
-      card.appendChild(el("div", { className: "divider" }));
-      card.appendChild(listContainer);
-
-      spaRoot.innerHTML = "";
-      spaRoot.appendChild(card);
-
-      addBtn.addEventListener("click", async () => {
-        const name = prompt("Nama Folder:");
-        if (!name) return;
-        try {
-          await secbrainTopicFoldersCol(topicId).add({
-            name,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          const header = el("div", { className: "list-item-header" });
+          const title = el("div", {
+            className: "list-item-title",
+            text: topic.name || "(Tiada nama)"
           });
-          renderSecBrainFoldersPage();
-        } catch (err) {
-          alert("Gagal tambah folder: " + err.message);
-        }
-      });
+          header.appendChild(title);
 
-      async function loadFolders() {
-        listContainer.innerHTML = "";
-        const loading = el("div", {
-          className: "text-xs muted",
-          text: "Memuatkan folder..."
+          const actions = el("div", { className: "list-item-actions" });
+
+          const btnEdit = el("button", {
+            className: "btn btn-xs btn-ghost",
+            text: "Sunting"
+          });
+          btnEdit.style.fontSize = "10px";
+          btnEdit.style.padding = "2px 6px";
+
+          const btnDelete = el("button", {
+            className: "btn btn-xs btn-ghost",
+            text: "Padam"
+          });
+          btnDelete.style.fontSize = "10px";
+          btnDelete.style.padding = "2px 6px";
+          btnDelete.style.color = "#fecaca";
+          btnDelete.style.borderColor = "#fecaca";
+
+          actions.appendChild(btnEdit);
+          actions.appendChild(btnDelete);
+          header.appendChild(actions);
+          item.appendChild(header);
+
+          const meta = el("div", { className: "list-item-meta" });
+          meta.appendChild(
+            el("span", {
+              text: "Topik idea spontan"
+            })
+          );
+          item.appendChild(meta);
+
+          // klik utama = masuk ke Page Folder Idea
+          item.addEventListener("click", (e) => {
+            if (e.target === btnEdit || e.target === btnDelete) return;
+            APP_STATE.secbrain.topicId = topic.id;
+            APP_STATE.secbrain.folderId = null;
+            APP_STATE.secbrain.codeId = null;
+            APP_STATE.secbrain.bundleId = null;
+            renderSecBrainFoldersPage();
+          });
+
+          btnEdit.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const newName = prompt("Nama Topik baru:", topic.name || "");
+            if (!newName) return;
+            try {
+              await secbrainTopicsCol().doc(topic.id).update({ name: newName });
+              loadTopics();
+            } catch (err) {
+              alert("Gagal sunting topik: " + err.message);
+            }
+          });
+
+          btnDelete.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            if (!confirm("Padam topik ini dan semua anaknya?")) return;
+            try {
+              await deleteSecbrainTopicDeep(topic.id);
+              loadTopics();
+            } catch (err) {
+              alert("Gagal padam topik: " + err.message);
+            }
+          });
+
+          listContainer.appendChild(item);
         });
-        listContainer.appendChild(loading);
-
-        try {
-          const snap = await secbrainTopicFoldersCol(topicId)
-            .orderBy("createdAt", "desc")
-            .get();
-          listContainer.innerHTML = "";
-          const filter = searchInput.value.trim().toLowerCase();
-          const docs = snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }))
-            .filter((f) =>
-              filter ? (f.name || "").toLowerCase().includes(filter) : true
-            );
-          if (!docs.length) {
-            listContainer.appendChild(
-              el("div", {
-                className: "text-xs muted",
-                text: "Tiada folder lagi. Tambah folder baharu."
-              })
-            );
-            return;
-          }
-
-          docs.forEach((folder) => {
-            const item = el("div", { className: "list-item" });
-            const header = el("div", { className: "list-item-header" });
-            header.appendChild(
-              el("div", {
-                className: "list-item-title",
-                text: folder.name || "(Tiada nama folder)"
-              })
-            );
-            const actions = el("div", { className: "list-item-actions" });
-
-            const btnEdit = el("button", {
-              className: "btn btn-xs btn-ghost",
-              text: "Sunting"
-            });
-            btnEdit.style.fontSize = "10px";
-            btnEdit.style.padding = "2px 6px";
-
-            const btnDelete = el("button", {
-              className: "btn btn-xs btn-ghost",
-              text: "Padam"
-            });
-            btnDelete.style.fontSize = "10px";
-            btnDelete.style.padding = "2px 6px";
-            btnDelete.style.color = "#fecaca";
-
-            actions.appendChild(btnEdit);
-            actions.appendChild(btnDelete);
-            header.appendChild(actions);
-            item.appendChild(header);
-
-            const meta = el("div", { className: "list-item-meta" });
-            meta.appendChild(
-              el("span", {
-                text: "Folder idea spontan"
-              })
-            );
-            item.appendChild(meta);
-
-            item.addEventListener("click", (e) => {
-              if (e.target === btnEdit || e.target === btnDelete) return;
-              APP_STATE.secbrain.folderId = folder.id;
-              APP_STATE.secbrain.codeId = null;
-              APP_STATE.secbrain.bundleId = null;
-              renderSecBrainCodesPage();
-            });
-
-            btnEdit.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              const newName = prompt(
-                "Nama Folder baru:",
-                folder.name || ""
-              );
-              if (!newName) return;
-              try {
-                await secbrainTopicFoldersCol(topicId)
-                  .doc(folder.id)
-                  .update({ name: newName });
-                renderSecBrainFoldersPage();
-              } catch (err) {
-                alert("Gagal sunting folder: " + err.message);
-              }
-            });
-
-            btnDelete.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              if (!confirm("Padam folder ini dan semua code + bundle di dalamnya?")) return;
-              try {
-                await deleteSecbrainFolderDeep(topicId, folder.id);
-                renderSecBrainFoldersPage();
-              } catch (err) {
-                alert("Gagal padam folder: " + err.message);
-              }
-            });
-
-            listContainer.appendChild(item);
-          });
-        } catch (err) {
-          listContainer.innerHTML = "";
-          listContainer.appendChild(
-            el("div", {
-              className: "error-banner",
-              text: "Gagal memuatkan folder: " + err.message
-            })
-          );
-        }
+      } catch (err) {
+        listContainer.innerHTML = "";
+        listContainer.appendChild(
+          el("div", {
+            className: "error-banner",
+            text: "Gagal memuatkan topik: " + err.message
+          })
+        );
       }
-
-      searchInput.addEventListener("input", () => loadFolders());
-      loadFolders();
     }
 
-    async function deleteSecbrainFolderDeep(topicId, folderId) {
+    searchInput.addEventListener("input", () => loadTopics());
+    loadTopics();
+  }
+
+  async function deleteSecbrainTopicDeep(topicId) {
+    const foldersSnap = await secbrainTopicFoldersCol(topicId).get();
+    for (const fDoc of foldersSnap.docs) {
+      const folderId = fDoc.id;
       const codesSnap = await secbrainFolderCodesCol(topicId, folderId).get();
       for (const cDoc of codesSnap.docs) {
         const codeId = cDoc.id;
@@ -1401,539 +1181,757 @@
         await batch.commit();
         await cDoc.ref.delete();
       }
-      await secbrainTopicFoldersCol(topicId).doc(folderId).delete();
+      await fDoc.ref.delete();
+    }
+    await secbrainTopicsCol().doc(topicId).delete();
+  }
+
+  // =========================
+  // PAGE: Folders (Page Tambah idea spontan)
+  // =========================
+  async function renderSecBrainFoldersPage() {
+    const topicId = APP_STATE.secbrain.topicId;
+    if (!topicId) {
+      renderSecBrainRoot();
+      return;
     }
 
-    // =========================
-    // PAGE: Codes
-    // =========================
-    async function renderSecBrainCodesPage() {
-      const { topicId, folderId } = APP_STATE.secbrain;
-      if (!topicId || !folderId) {
-        renderSecBrainRoot();
-        return;
+    const topicDoc = await secbrainTopicsCol().doc(topicId).get();
+    const topicName = topicDoc.exists ? topicDoc.data().name : "Topik";
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    const left = el("div", { className: "stack-v" });
+    left.appendChild(
+      el("div", {
+        className: "card-title",
+        text: topicName
+      })
+    );
+    left.appendChild(
+      el("div", {
+        className: "card-subtitle",
+        text: "Page Tambah Idea Spontan — Folder Idea."
+      })
+    );
+    header.appendChild(left);
+
+    const backBtn = el("button", {
+      className: "btn btn-sm btn-ghost",
+      text: "Kembali"
+    });
+    backBtn.addEventListener("click", () => {
+      // balik ke page topik
+      renderSecBrainRoot();
+    });
+    header.appendChild(backBtn);
+
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const searchInput = el("input", {
+      attrs: {
+        type: "search",
+        placeholder: "Cari folder (guna tarikh / nama folder)..."
       }
-      const folderDoc = await secbrainTopicFoldersCol(topicId)
-        .doc(folderId)
-        .get();
-      const folderName = folderDoc.exists ? folderDoc.data().name : "Folder";
+    });
 
-      const card = el("div", { className: "card" });
+    const addBtn = el("button", {
+      className: "btn btn-full mt-2",
+      text: "Tambah Folder Baharu"
+    });
 
-      const header = el("div", { className: "card-header" });
-      const left = el("div", { className: "stack-v" });
-      left.appendChild(
-        el("div", {
-          className: "card-title",
-          text: folderName
-        })
-      );
-      left.appendChild(
-        el("div", {
-          className: "card-subtitle",
-          text: "Page Code — kumpulan untuk idea."
-        })
-      );
-      header.appendChild(left);
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
 
-      const backBtn = el("button", {
-        className: "btn btn-sm btn-ghost",
-        text: "Kembali"
-      });
-      backBtn.addEventListener("click", () => {
-        renderSecBrainFoldersPage();
-      });
-      header.appendChild(backBtn);
+    card.appendChild(searchInput);
+    card.appendChild(addBtn);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
 
-      card.appendChild(header);
-      card.appendChild(el("div", { className: "divider" }));
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
 
-      const searchInput = el("input", {
-        attrs: {
-          type: "search",
-          placeholder: "Cari code..."
-        }
-      });
-
-      const addBtn = el("button", {
-        className: "btn btn-full mt-2",
-        text: "Tambah Code Baharu"
-      });
-
-      const listContainer = el("div", {
-        className: "section scroll-y",
-        style: "max-height: 60vh;"
-      });
-
-      card.appendChild(searchInput);
-      card.appendChild(addBtn);
-      card.appendChild(el("div", { className: "divider" }));
-      card.appendChild(listContainer);
-
-      spaRoot.innerHTML = "";
-      spaRoot.appendChild(card);
-
-      addBtn.addEventListener("click", async () => {
-        const name = prompt("Nama Code:");
-        if (!name) return;
-        try {
-          await secbrainFolderCodesCol(topicId, folderId).add({
-            name,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          renderSecBrainCodesPage();
-        } catch (err) {
-          alert("Gagal tambah code: " + err.message);
-        }
-      });
-
-      async function loadCodes() {
-        listContainer.innerHTML = "";
-        const loading = el("div", {
-          className: "text-xs muted",
-          text: "Memuatkan code..."
+    addBtn.addEventListener("click", async () => {
+      const name = prompt("Nama Folder:");
+      if (!name) return;
+      try {
+        await secbrainTopicFoldersCol(topicId).add({
+          name,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        listContainer.appendChild(loading);
+        loadFolders();
+      } catch (err) {
+        alert("Gagal tambah folder: " + err.message);
+      }
+    });
 
-        try {
-          const snap = await secbrainFolderCodesCol(topicId, folderId)
-            .orderBy("createdAt", "desc")
-            .get();
-          listContainer.innerHTML = "";
-          const filter = searchInput.value.trim().toLowerCase();
+    async function loadFolders() {
+      listContainer.innerHTML = "";
+      const loading = el("div", {
+        className: "text-xs muted",
+        text: "Memuatkan folder..."
+      });
+      listContainer.appendChild(loading);
 
-          const docs = snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }))
-            .filter((c) =>
-              filter ? (c.name || "").toLowerCase().includes(filter) : true
-            );
-          if (!docs.length) {
-            listContainer.appendChild(
-              el("div", {
-                className: "text-xs muted",
-                text: "Tiada code lagi. Tambah code baharu."
-              })
-            );
-            return;
-          }
-
-          docs.forEach((code) => {
-            const item = el("div", { className: "list-item" });
-            const header = el("div", { className: "list-item-header" });
-            header.appendChild(
-              el("div", {
-                className: "list-item-title",
-                text: code.name || "(Tiada nama code)"
-              })
-            );
-            const actions = el("div", { className: "list-item-actions" });
-
-            const btnEdit = el("button", {
-              className: "btn btn-xs btn-ghost",
-              text: "Sunting"
-            });
-            btnEdit.style.fontSize = "10px";
-            btnEdit.style.padding = "2px 6px";
-
-            const btnDelete = el("button", {
-              className: "btn btn-xs btn-ghost",
-              text: "Padam"
-            });
-            btnDelete.style.fontSize = "10px";
-            btnDelete.style.padding = "2px 6px";
-            btnDelete.style.color = "#fecaca";
-
-            actions.appendChild(btnEdit);
-            actions.appendChild(btnDelete);
-            header.appendChild(actions);
-            item.appendChild(header);
-
-            item.addEventListener("click", (e) => {
-              if (e.target === btnEdit || e.target === btnDelete) return;
-              APP_STATE.secbrain.codeId = code.id;
-              APP_STATE.secbrain.bundleId = null;
-              renderSecBrainBundlesPage();
-            });
-
-            btnEdit.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              const newName = prompt(
-                "Nama Code baru:",
-                code.name || ""
-              );
-              if (!newName) return;
-              try {
-                await secbrainFolderCodesCol(topicId, folderId)
-                  .doc(code.id)
-                  .update({ name: newName });
-                renderSecBrainCodesPage();
-              } catch (err) {
-                alert("Gagal sunting code: " + err.message);
-              }
-            });
-
-            btnDelete.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              if (!confirm("Padam code ini dan semua bundle di dalamnya?")) return;
-              try {
-                const bundlesSnap = await secbrainCodeBundlesCol(
-                  topicId,
-                  folderId,
-                  code.id
-                ).get();
-                const batch = db.batch();
-                bundlesSnap.docs.forEach((b) => batch.delete(b.ref));
-                await batch.commit();
-                await secbrainFolderCodesCol(topicId, folderId)
-                  .doc(code.id)
-                  .delete();
-                renderSecBrainCodesPage();
-              } catch (err) {
-                alert("Gagal padam code: " + err.message);
-              }
-            });
-
-            listContainer.appendChild(item);
-          });
-        } catch (err) {
-          listContainer.innerHTML = "";
+      try {
+        const snap = await secbrainTopicFoldersCol(topicId)
+          .orderBy("createdAt", "desc")
+          .get();
+        listContainer.innerHTML = "";
+        const filter = searchInput.value.trim().toLowerCase();
+        const docs = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((f) =>
+            filter ? (f.name || "").toLowerCase().includes(filter) : true
+          );
+        if (!docs.length) {
           listContainer.appendChild(
             el("div", {
-              className: "error-banner",
-              text: "Gagal memuatkan code: " + err.message
+              className: "text-xs muted",
+              text: "Tiada folder lagi. Tambah folder baharu."
             })
           );
+          return;
         }
-      }
 
-      searchInput.addEventListener("input", () => loadCodes());
-      loadCodes();
-    }
-
-    // =========================
-    // PAGE: Bundles LIST (Page Tambah Elemen Bundle)
-    // =========================
-    async function renderSecBrainBundlesPage() {
-      const { topicId, folderId, codeId } = APP_STATE.secbrain;
-      if (!topicId || !folderId || !codeId) {
-        renderSecBrainRoot();
-        return;
-      }
-
-      const codeDoc = await secbrainFolderCodesCol(topicId, folderId)
-        .doc(codeId)
-        .get();
-      const codeName = codeDoc.exists ? codeDoc.data().name : "Code";
-
-      const card = el("div", { className: "card" });
-
-      const header = el("div", { className: "card-header" });
-      const left = el("div", { className: "stack-v" });
-      left.appendChild(
-        el("div", {
-          className: "card-title",
-          text: codeName
-        })
-      );
-      left.appendChild(
-        el("div", {
-          className: "card-subtitle",
-          text: 'Page "Tambah bundle" — kumpulan bundle idea.'
-        })
-      );
-      header.appendChild(left);
-
-      const backBtn = el("button", {
-        className: "btn btn-sm btn-ghost",
-        text: "Kembali"
-      });
-      backBtn.addEventListener("click", () => {
-        renderSecBrainCodesPage();
-      });
-      header.appendChild(backBtn);
-
-      card.appendChild(header);
-      card.appendChild(el("div", { className: "divider" }));
-
-      const addBtn = el("button", {
-        className: "btn btn-full",
-        text: "Tambah bundle"
-      });
-
-      const listContainer = el("div", {
-        className: "section scroll-y",
-        style: "max-height: 60vh;"
-      });
-
-      card.appendChild(addBtn);
-      card.appendChild(el("div", { className: "divider" }));
-      card.appendChild(listContainer);
-
-      spaRoot.innerHTML = "";
-      spaRoot.appendChild(card);
-
-      addBtn.addEventListener("click", async () => {
-        const name = prompt("Nama bundle:");
-        if (!name) return;
-        try {
-          await secbrainCodeBundlesCol(topicId, folderId, codeId).add({
-            name,
-            ideaSpontan: "",
-            source: "",
-            estimateWhen: "",
-            note: "",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          renderSecBrainBundlesPage();
-        } catch (err) {
-          alert("Gagal tambah bundle: " + err.message);
-        }
-      });
-
-      async function loadBundles() {
-        listContainer.innerHTML = "";
-        const loading = el("div", {
-          className: "text-xs muted",
-          text: "Memuatkan bundle..."
-        });
-        listContainer.appendChild(loading);
-
-        try {
-          const snap = await secbrainCodeBundlesCol(
-            topicId,
-            folderId,
-            codeId
-          )
-            .orderBy("createdAt", "desc")
-            .get();
-          listContainer.innerHTML = "";
-
-          const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-          if (!docs.length) {
-            listContainer.appendChild(
-              el("div", {
-                className: "text-xs muted",
-                text: "Tiada bundle lagi. Tambah bundle."
-              })
-            );
-            return;
-          }
-
-          docs.forEach((bundle) => {
-            const item = el("div", { className: "list-item" });
-
-            const header = el("div", { className: "list-item-header" });
-            header.appendChild(
-              el("div", {
-                className: "list-item-title",
-                text: bundle.name || "(Bundle tanpa nama)"
-              })
-            );
-            const actions = el("div", { className: "list-item-actions" });
-
-            const btnEdit = el("button", {
-              className: "btn btn-xs btn-ghost",
-              text: "Sunting nama"
-            });
-            btnEdit.style.fontSize = "10px";
-            btnEdit.style.padding = "2px 6px";
-
-            const btnDelete = el("button", {
-              className: "btn btn-xs btn-ghost",
-              text: "Padam"
-            });
-            btnDelete.style.fontSize = "10px";
-            btnDelete.style.padding = "2px 6px";
-            btnDelete.style.color = "#fecaca";
-
-            actions.appendChild(btnEdit);
-            actions.appendChild(btnDelete);
-            header.appendChild(actions);
-            item.appendChild(header);
-
-            item.addEventListener("click", (e) => {
-              if (e.target === btnEdit || e.target === btnDelete) return;
-              APP_STATE.secbrain.bundleId = bundle.id;
-              renderSecBrainBundleDetailPage();
-            });
-
-            btnEdit.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              const newName = prompt(
-                "Nama bundle baru:",
-                bundle.name || ""
-              );
-              if (!newName) return;
-              try {
-                await secbrainCodeBundlesCol(
-                  topicId,
-                  folderId,
-                  codeId
-                )
-                  .doc(bundle.id)
-                  .update({ name: newName });
-                renderSecBrainBundlesPage();
-              } catch (err) {
-                alert("Gagal sunting bundle: " + err.message);
-              }
-            });
-
-            btnDelete.addEventListener("click", async (e) => {
-              e.stopPropagation();
-              if (!confirm("Padam bundle ini?")) return;
-              try {
-                await secbrainCodeBundlesCol(
-                  topicId,
-                  folderId,
-                  codeId
-                )
-                  .doc(bundle.id)
-                  .delete();
-                renderSecBrainBundlesPage();
-              } catch (err) {
-                alert("Gagal padam bundle: " + err.message);
-              }
-            });
-
-            listContainer.appendChild(item);
-          });
-        } catch (err) {
-          listContainer.innerHTML = "";
-          listContainer.appendChild(
+        docs.forEach((folder) => {
+          const item = el("div", { className: "list-item" });
+          const header = el("div", { className: "list-item-header" });
+          header.appendChild(
             el("div", {
-              className: "error-banner",
-              text: "Gagal memuatkan bundle: " + err.message
+              className: "list-item-title",
+              text: folder.name || "(Tiada nama folder)"
             })
           );
-        }
-      }
+          const actions = el("div", { className: "list-item-actions" });
 
-      loadBundles();
-    }
+          const btnEdit = el("button", {
+            className: "btn btn-xs btn-ghost",
+            text: "Sunting"
+          });
+          btnEdit.style.fontSize = "10px";
+          btnEdit.style.padding = "2px 6px";
 
-    // =========================
-    // PAGE: BUNDLE DETAIL (PAGE BUNDLE)
-    // =========================
-    async function renderSecBrainBundleDetailPage() {
-      const { topicId, folderId, codeId, bundleId } = APP_STATE.secbrain;
-      if (!topicId || !folderId || !codeId || !bundleId) {
-        renderSecBrainRoot();
-        return;
-      }
+          const btnDelete = el("button", {
+            className: "btn btn-xs btn-ghost",
+            text: "Padam"
+          });
+          btnDelete.style.fontSize = "10px";
+          btnDelete.style.padding = "2px 6px";
+          btnDelete.style.color = "#fecaca";
 
-      const docRef = secbrainCodeBundlesCol(topicId, folderId, codeId).doc(
-        bundleId
-      );
-      const docSnap = await docRef.get();
-      if (!docSnap.exists) {
-        alert("Bundle tidak ditemui.");
-        renderSecBrainBundlesPage();
-        return;
-      }
-      const data = docSnap.data();
+          actions.appendChild(btnEdit);
+          actions.appendChild(btnDelete);
+          header.appendChild(actions);
+          item.appendChild(header);
 
-      const card = el("div", { className: "card" });
+          const meta = el("div", { className: "list-item-meta" });
+          meta.appendChild(
+            el("span", {
+              text: "Folder idea spontan"
+            })
+          );
+          item.appendChild(meta);
 
-      const header = el("div", { className: "card-header" });
-      header.appendChild(
-        el("div", {
-          className: "card-title",
-          text: data.name || "Bundle"
-        })
-      );
-      header.appendChild(
-        el("button", {
-          className: "btn btn-sm btn-ghost",
-          text: "Kembali",
-          on: {
-            click: () => {
-              renderSecBrainBundlesPage();
+          item.addEventListener("click", (e) => {
+            if (e.target === btnEdit || e.target === btnDelete) return;
+            APP_STATE.secbrain.folderId = folder.id;
+            APP_STATE.secbrain.codeId = null;
+            APP_STATE.secbrain.bundleId = null;
+            renderSecBrainCodesPage();
+          });
+
+          btnEdit.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const newName = prompt(
+              "Nama Folder baru:",
+              folder.name || ""
+            );
+            if (!newName) return;
+            try {
+              await secbrainTopicFoldersCol(topicId)
+                .doc(folder.id)
+                .update({ name: newName });
+              loadFolders();
+            } catch (err) {
+              alert("Gagal sunting folder: " + err.message);
             }
-          }
-        })
-      );
-      card.appendChild(header);
-      card.appendChild(el("div", { className: "divider" }));
+          });
 
-      // Elemen tetap:
-      // Idea spontan
-      // Tempat dapat idea spontan ini
-      // Anggaran bila untuk mewujudkan idea spontan ini
-      // Nota tambahan
+          btnDelete.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            if (!confirm("Padam folder ini dan semua code + bundle di dalamnya?")) return;
+            try {
+              await deleteSecbrainFolderDeep(topicId, folder.id);
+              loadFolders();
+            } catch (err) {
+              alert("Gagal padam folder: " + err.message);
+            }
+          });
 
-      const section = el("div", { className: "section" });
-
-      const ideaLabel = el("div", {
-        className: "section-title",
-        text: "Idea spontan"
-      });
-      const ideaInput = el("textarea");
-      ideaInput.value = data.ideaSpontan || "";
-
-      const sourceLabel = el("div", {
-        className: "section-title",
-        text: "Tempat dapat idea spontan ini"
-      });
-      const sourceInput = el("textarea");
-      sourceInput.value = data.source || "";
-
-      const whenLabel = el("div", {
-        className: "section-title",
-        text: "Anggaran bila untuk mewujudkan idea spontan ini"
-      });
-      const whenInput = el("textarea");
-      whenInput.value = data.estimateWhen || "";
-
-      const noteLabel = el("div", {
-        className: "section-title",
-        text: "Nota tambahan"
-      });
-      const noteInput = el("textarea");
-      noteInput.value = data.note || "";
-
-      section.appendChild(ideaLabel);
-      section.appendChild(ideaInput);
-      section.appendChild(sourceLabel);
-      section.appendChild(sourceInput);
-      section.appendChild(whenLabel);
-      section.appendChild(whenInput);
-      section.appendChild(noteLabel);
-      section.appendChild(noteInput);
-
-      const hint = el("div", {
-        className: "section-note",
-        text: "Perubahan disimpan automatik ke cloud (Firestore)."
-      });
-
-      card.appendChild(section);
-      card.appendChild(hint);
-
-      spaRoot.innerHTML = "";
-      spaRoot.appendChild(card);
-
-      let saveTimeout = null;
-      function scheduleSave() {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(async () => {
-          try {
-            await docRef.update({
-              ideaSpontan: ideaInput.value,
-              source: sourceInput.value,
-              estimateWhen: whenInput.value,
-              note: noteInput.value,
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-          } catch (err) {
-            console.error("Gagal auto-save bundle:", err);
-          }
-        }, 600);
+          listContainer.appendChild(item);
+        });
+      } catch (err) {
+        listContainer.innerHTML = "";
+        listContainer.appendChild(
+          el("div", {
+            className: "error-banner",
+            text: "Gagal memuatkan folder: " + err.message
+          })
+        );
       }
-
-      [ideaInput, sourceInput, whenInput, noteInput].forEach((input) => {
-        input.addEventListener("input", scheduleSave);
-      });
     }
-  </script>
+
+    searchInput.addEventListener("input", () => loadFolders());
+    loadFolders();
+  }
+
+  async function deleteSecbrainFolderDeep(topicId, folderId) {
+    const codesSnap = await secbrainFolderCodesCol(topicId, folderId).get();
+    for (const cDoc of codesSnap.docs) {
+      const codeId = cDoc.id;
+      const bundlesSnap = await secbrainCodeBundlesCol(
+        topicId,
+        folderId,
+        codeId
+      ).get();
+      const batch = db.batch();
+      bundlesSnap.docs.forEach((b) => batch.delete(b.ref));
+      await batch.commit();
+      await cDoc.ref.delete();
+    }
+    await secbrainTopicFoldersCol(topicId).doc(folderId).delete();
+  }
+
+  // =========================
+  // PAGE: Codes
+  // =========================
+  async function renderSecBrainCodesPage() {
+    const { topicId, folderId } = APP_STATE.secbrain;
+    if (!topicId || !folderId) {
+      renderSecBrainRoot();
+      return;
+    }
+    const folderDoc = await secbrainTopicFoldersCol(topicId)
+      .doc(folderId)
+      .get();
+    const folderName = folderDoc.exists ? folderDoc.data().name : "Folder";
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    const left = el("div", { className: "stack-v" });
+    left.appendChild(
+      el("div", {
+        className: "card-title",
+        text: folderName
+      })
+    );
+    left.appendChild(
+      el("div", {
+        className: "card-subtitle",
+        text: "Page Code — kumpulan untuk idea."
+      })
+    );
+    header.appendChild(left);
+
+    const backBtn = el("button", {
+      className: "btn btn-sm btn-ghost",
+      text: "Kembali"
+    });
+    backBtn.addEventListener("click", () => {
+      renderSecBrainFoldersPage();
+    });
+    header.appendChild(backBtn);
+
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const searchInput = el("input", {
+      attrs: {
+        type: "search",
+        placeholder: "Cari code..."
+      }
+    });
+
+    const addBtn = el("button", {
+      className: "btn btn-full mt-2",
+      text: "Tambah Code Baharu"
+    });
+
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
+
+    card.appendChild(searchInput);
+    card.appendChild(addBtn);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    addBtn.addEventListener("click", async () => {
+      const name = prompt("Nama Code:");
+      if (!name) return;
+      try {
+        await secbrainFolderCodesCol(topicId, folderId).add({
+          name,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        loadCodes();
+      } catch (err) {
+        alert("Gagal tambah code: " + err.message);
+      }
+    });
+
+    async function loadCodes() {
+      listContainer.innerHTML = "";
+      const loading = el("div", {
+        className: "text-xs muted",
+        text: "Memuatkan code..."
+      });
+      listContainer.appendChild(loading);
+
+      try {
+        const snap = await secbrainFolderCodesCol(topicId, folderId)
+          .orderBy("createdAt", "desc")
+          .get();
+        listContainer.innerHTML = "";
+        const filter = searchInput.value.trim().toLowerCase();
+
+        const docs = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((c) =>
+            filter ? (c.name || "").toLowerCase().includes(filter) : true
+          );
+        if (!docs.length) {
+          listContainer.appendChild(
+            el("div", {
+              className: "text-xs muted",
+              text: "Tiada code lagi. Tambah code baharu."
+            })
+          );
+          return;
+        }
+
+        docs.forEach((code) => {
+          const item = el("div", { className: "list-item" });
+          const header = el("div", { className: "list-item-header" });
+          header.appendChild(
+            el("div", {
+              className: "list-item-title",
+              text: code.name || "(Tiada nama code)"
+            })
+          );
+          const actions = el("div", { className: "list-item-actions" });
+
+          const btnEdit = el("button", {
+            className: "btn btn-xs btn-ghost",
+            text: "Sunting"
+          });
+          btnEdit.style.fontSize = "10px";
+          btnEdit.style.padding = "2px 6px";
+
+          const btnDelete = el("button", {
+            className: "btn btn-xs btn-ghost",
+            text: "Padam"
+          });
+          btnDelete.style.fontSize = "10px";
+          btnDelete.style.padding = "2px 6px";
+          btnDelete.style.color = "#fecaca";
+
+          actions.appendChild(btnEdit);
+          actions.appendChild(btnDelete);
+          header.appendChild(actions);
+          item.appendChild(header);
+
+          item.addEventListener("click", (e) => {
+            if (e.target === btnEdit || e.target === btnDelete) return;
+            APP_STATE.secbrain.codeId = code.id;
+            APP_STATE.secbrain.bundleId = null;
+            renderSecBrainBundlesPage();
+          });
+
+          btnEdit.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const newName = prompt(
+              "Nama Code baru:",
+              code.name || ""
+            );
+            if (!newName) return;
+            try {
+              await secbrainFolderCodesCol(topicId, folderId)
+                .doc(code.id)
+                .update({ name: newName });
+              loadCodes();
+            } catch (err) {
+              alert("Gagal sunting code: " + err.message);
+            }
+          });
+
+          btnDelete.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            if (!confirm("Padam code ini dan semua bundle di dalamnya?")) return;
+            try {
+              const bundlesSnap = await secbrainCodeBundlesCol(
+                topicId,
+                folderId,
+                code.id
+              ).get();
+              const batch = db.batch();
+              bundlesSnap.docs.forEach((b) => batch.delete(b.ref));
+              await batch.commit();
+              await secbrainFolderCodesCol(topicId, folderId)
+                .doc(code.id)
+                .delete();
+              loadCodes();
+            } catch (err) {
+              alert("Gagal padam code: " + err.message);
+            }
+          });
+
+          listContainer.appendChild(item);
+        });
+      } catch (err) {
+        listContainer.innerHTML = "";
+        listContainer.appendChild(
+          el("div", {
+            className: "error-banner",
+            text: "Gagal memuatkan code: " + err.message
+          })
+        );
+      }
+    }
+
+    searchInput.addEventListener("input", () => loadCodes());
+    loadCodes();
+  }
+
+  // =========================
+  // PAGE: Bundles LIST
+  // =========================
+  async function renderSecBrainBundlesPage() {
+    const { topicId, folderId, codeId } = APP_STATE.secbrain;
+    if (!topicId || !folderId || !codeId) {
+      renderSecBrainRoot();
+      return;
+    }
+
+    const codeDoc = await secbrainFolderCodesCol(topicId, folderId)
+      .doc(codeId)
+      .get();
+    const codeName = codeDoc.exists ? codeDoc.data().name : "Code";
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    const left = el("div", { className: "stack-v" });
+    left.appendChild(
+      el("div", {
+        className: "card-title",
+        text: codeName
+      })
+    );
+    left.appendChild(
+      el("div", {
+        className: "card-subtitle",
+        text: 'Page "Tambah bundle" — kumpulan bundle idea.'
+      })
+    );
+    header.appendChild(left);
+
+    const backBtn = el("button", {
+      className: "btn btn-sm btn-ghost",
+      text: "Kembali"
+    });
+    backBtn.addEventListener("click", () => {
+      renderSecBrainCodesPage();
+    });
+    header.appendChild(backBtn);
+
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const addBtn = el("button", {
+      className: "btn btn-full",
+      text: "Tambah bundle"
+    });
+
+    const listContainer = el("div", {
+      className: "section scroll-y",
+      style: "max-height: 60vh;"
+    });
+
+    card.appendChild(addBtn);
+    card.appendChild(el("div", { className: "divider" }));
+    card.appendChild(listContainer);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    addBtn.addEventListener("click", async () => {
+      const name = prompt("Nama bundle:");
+      if (!name) return;
+      try {
+        await secbrainCodeBundlesCol(topicId, folderId, codeId).add({
+          name,
+          ideaSpontan: "",
+          source: "",
+          estimateWhen: "",
+          note: "",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        loadBundles();
+      } catch (err) {
+        alert("Gagal tambah bundle: " + err.message);
+      }
+    });
+
+    async function loadBundles() {
+      listContainer.innerHTML = "";
+      const loading = el("div", {
+        className: "text-xs muted",
+        text: "Memuatkan bundle..."
+      });
+      listContainer.appendChild(loading);
+
+      try {
+        const snap = await secbrainCodeBundlesCol(
+          topicId,
+          folderId,
+          codeId
+        )
+          .orderBy("createdAt", "desc")
+          .get();
+        listContainer.innerHTML = "";
+
+        const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        if (!docs.length) {
+          listContainer.appendChild(
+            el("div", {
+              className: "text-xs muted",
+              text: "Tiada bundle lagi. Tambah bundle."
+            })
+          );
+          return;
+        }
+
+        docs.forEach((bundle) => {
+          const item = el("div", { className: "list-item" });
+
+          const header = el("div", { className: "list-item-header" });
+          header.appendChild(
+            el("div", {
+              className: "list-item-title",
+              text: bundle.name || "(Bundle tanpa nama)"
+            })
+          );
+          const actions = el("div", { className: "list-item-actions" });
+
+          const btnEdit = el("button", {
+            className: "btn btn-xs btn-ghost",
+            text: "Sunting nama"
+          });
+          btnEdit.style.fontSize = "10px";
+          btnEdit.style.padding = "2px 6px";
+
+          const btnDelete = el("button", {
+            className: "btn btn-xs btn-ghost",
+            text: "Padam"
+          });
+          btnDelete.style.fontSize = "10px";
+          btnDelete.style.padding = "2px 6px";
+          btnDelete.style.color = "#fecaca";
+
+          actions.appendChild(btnEdit);
+          actions.appendChild(btnDelete);
+          header.appendChild(actions);
+          item.appendChild(header);
+
+          item.addEventListener("click", (e) => {
+            if (e.target === btnEdit || e.target === btnDelete) return;
+            APP_STATE.secbrain.bundleId = bundle.id;
+            renderSecBrainBundleDetailPage();
+          });
+
+          btnEdit.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const newName = prompt(
+              "Nama bundle baru:",
+              bundle.name || ""
+            );
+            if (!newName) return;
+            try {
+              await secbrainCodeBundlesCol(
+                topicId,
+                folderId,
+                codeId
+              )
+                .doc(bundle.id)
+                .update({ name: newName });
+              loadBundles();
+            } catch (err) {
+              alert("Gagal sunting bundle: " + err.message);
+            }
+          });
+
+          btnDelete.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            if (!confirm("Padam bundle ini?")) return;
+            try {
+              await secbrainCodeBundlesCol(
+                topicId,
+                folderId,
+                codeId
+              )
+                .doc(bundle.id)
+                .delete();
+              loadBundles();
+            } catch (err) {
+              alert("Gagal padam bundle: " + err.message);
+            }
+          });
+
+          listContainer.appendChild(item);
+        });
+      } catch (err) {
+        listContainer.innerHTML = "";
+        listContainer.appendChild(
+          el("div", {
+            className: "error-banner",
+            text: "Gagal memuatkan bundle: " + err.message
+          })
+        );
+      }
+    }
+
+    loadBundles();
+  }
+
+  // =========================
+  // PAGE: BUNDLE DETAIL (PAGE BUNDLE)
+  // =========================
+  async function renderSecBrainBundleDetailPage() {
+    const { topicId, folderId, codeId, bundleId } = APP_STATE.secbrain;
+    if (!topicId || !folderId || !codeId || !bundleId) {
+      renderSecBrainRoot();
+      return;
+    }
+
+    const docRef = secbrainCodeBundlesCol(topicId, folderId, codeId).doc(
+      bundleId
+    );
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      alert("Bundle tidak ditemui.");
+      renderSecBrainBundlesPage();
+      return;
+    }
+    const data = docSnap.data();
+
+    const card = el("div", { className: "card" });
+
+    const header = el("div", { className: "card-header" });
+    header.appendChild(
+      el("div", {
+        className: "card-title",
+        text: data.name || "Bundle"
+      })
+    );
+    header.appendChild(
+      el("button", {
+        className: "btn btn-sm btn-ghost",
+        text: "Kembali",
+        on: {
+          click: () => {
+            renderSecBrainBundlesPage();
+          }
+        }
+      })
+    );
+    card.appendChild(header);
+    card.appendChild(el("div", { className: "divider" }));
+
+    const section = el("div", { className: "section" });
+
+    const ideaLabel = el("div", {
+      className: "section-title",
+      text: "Idea spontan"
+    });
+    const ideaInput = el("textarea");
+    ideaInput.value = data.ideaSpontan || "";
+
+    const sourceLabel = el("div", {
+      className: "section-title",
+      text: "Tempat dapat idea spontan ini"
+    });
+    const sourceInput = el("textarea");
+    sourceInput.value = data.source || "";
+
+    const whenLabel = el("div", {
+      className: "section-title",
+      text: "Anggaran bila untuk mewujudkan idea spontan ini"
+    });
+    const whenInput = el("textarea");
+    whenInput.value = data.estimateWhen || "";
+
+    const noteLabel = el("div", {
+      className: "section-title",
+      text: "Nota tambahan"
+    });
+    const noteInput = el("textarea");
+    noteInput.value = data.note || "";
+
+    section.appendChild(ideaLabel);
+    section.appendChild(ideaInput);
+    section.appendChild(sourceLabel);
+    section.appendChild(sourceInput);
+    section.appendChild(whenLabel);
+    section.appendChild(whenInput);
+    section.appendChild(noteLabel);
+    section.appendChild(noteInput);
+
+    const hint = el("div", {
+      className: "section-note",
+      text: "Perubahan disimpan automatik ke cloud (Firestore)."
+    });
+
+    card.appendChild(section);
+    card.appendChild(hint);
+
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+
+    let saveTimeout = null;
+    function scheduleSave() {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        try {
+          await docRef.update({
+            ideaSpontan: ideaInput.value,
+            source: sourceInput.value,
+            estimateWhen: whenInput.value,
+            note: noteInput.value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (err) {
+          console.error("Gagal auto-save bundle:", err);
+        }
+      }, 600);
+    }
+
+    [ideaInput, sourceInput, whenInput, noteInput].forEach((input) => {
+      input.addEventListener("input", scheduleSave);
+    });
+  }
+</script>
+   
 <script>
   // =========================
   // SCHEDULE ROOT PAGE (3.2)
