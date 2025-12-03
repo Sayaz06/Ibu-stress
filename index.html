@@ -2365,127 +2365,166 @@
   // =========================
   // PAGE JADUAL (3.2b)
   // =========================
-  async function renderScheduleJadualPage() {
-    const card = el("div", { className: "card" });
+async function renderScheduleJadualPage() {
+  const card = el("div", { className: "card" });
 
-    // Header
-    const header = el("div", { className: "card-header" });
-    header.appendChild(
-      el("div", {
-        className: "card-title",
-        text: "Jadual Harian"
-      })
-    );
-    header.appendChild(
-      el("button", {
-        className: "btn btn-sm btn-ghost",
-        text: "Kembali",
-        on: { click: () => renderScheduleRoot() }
-      })
-    );
-    card.appendChild(header);
-    card.appendChild(el("div", { className: "divider" }));
+  // Header
+  const header = el("div", { className: "card-header" });
+  header.appendChild(
+    el("div", {
+      className: "card-title",
+      text: "Jadual Harian"
+    })
+  );
+  header.appendChild(
+    el("button", {
+      className: "btn btn-sm btn-ghost",
+      text: "Kembali",
+      on: { click: () => renderScheduleRoot() }
+    })
+  );
+  card.appendChild(header);
+  card.appendChild(el("div", { className: "divider" }));
 
-    // =========================
-    // PILIH HARI
-    // =========================
-    const daySelect = el("select");
-    const days = ["isnin", "selasa", "rabu", "khamis", "jumaat", "sabtu", "ahad"];
+  // =========================
+  // PILIH HARI
+  // =========================
+  const daySelect = el("select");
 
-    daySelect.appendChild(el("option", { text: "Pilih Hari", attrs: { value: "" } }));
+  // 👉 Update: tambah "all" ke dalam array
+  const days = ["all","isnin","selasa","rabu","khamis","jumaat","sabtu","ahad"];
 
-    days.forEach((d) => {
-      const opt = el("option", {
-        text: d.charAt(0).toUpperCase() + d.slice(1),
-        attrs: { value: d }
-      });
-      if (APP_STATE.schedule.day === d) opt.selected = true;
-      daySelect.appendChild(opt);
+  daySelect.appendChild(el("option", { text: "Pilih Hari", attrs: { value: "" } }));
+
+  days.forEach((d) => {
+    const opt = el("option", {
+      text: d.charAt(0).toUpperCase() + d.slice(1),
+      attrs: { value: d }
     });
+    if (APP_STATE.schedule.day === d) opt.selected = true;
+    daySelect.appendChild(opt);
+  });
 
-    daySelect.addEventListener("change", () => {
-      APP_STATE.schedule.day = daySelect.value;
-      APP_STATE.schedule.subCodeId = null;
-      APP_STATE.schedule.selectedActivityId = null;
-      renderScheduleJadualPage();
-    });
+  daySelect.addEventListener("change", () => {
+    APP_STATE.schedule.day = daySelect.value;
+    APP_STATE.schedule.subCodeId = null;
+    APP_STATE.schedule.selectedActivityId = null;
+    renderScheduleJadualPage();
+  });
 
-    card.appendChild(daySelect);
+  card.appendChild(daySelect);
 
-    // If no day selected → stop here
-    if (!APP_STATE.schedule.day) {
-      spaRoot.innerHTML = "";
-      spaRoot.appendChild(card);
-      return;
+  // If no day selected → stop here
+  if (!APP_STATE.schedule.day) {
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+    return;
+  }
+
+  const day = APP_STATE.schedule.day;
+  const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+
+  // =========================
+  // PILIH CODE SUB-HARI
+  // =========================
+  const codeSelect = el("select");
+  codeSelect.appendChild(el("option", { text: "Pilih Code Sub‑" + dayName, attrs: { value: "" } }));
+
+  // 👉 Update: handle query untuk "all"
+  let codeSnap;
+  if (day === "all") {
+    const daysAll = ["isnin","selasa","rabu","khamis","jumaat","sabtu","ahad"];
+    codeSnap = [];
+    for (const d of daysAll) {
+      const snap = await userDoc()
+        .collection("schedule_subhari")
+        .doc(d)
+        .collection("codes")
+        .orderBy("createdAt","desc")
+        .get();
+      snap.forEach((c) => codeSnap.push(c));
     }
-
-    const day = APP_STATE.schedule.day;
-    const dayName = day.charAt(0).toUpperCase() + day.slice(1);
-
-    // =========================
-    // PILIH CODE SUB-HARI
-    // =========================
-    const codeSelect = el("select");
-    codeSelect.appendChild(el("option", { text: "Pilih Code Sub‑" + dayName, attrs: { value: "" } }));
-
+  } else {
     const codeRef = userDoc()
       .collection("schedule_subhari")
       .doc(day)
       .collection("codes");
+    codeSnap = await codeRef.orderBy("createdAt","desc").get();
+  }
 
-    const codeSnap = await codeRef.orderBy("createdAt", "desc").get();
-
-    codeSnap.forEach((c) => {
-      const code = { id: c.id, ...c.data() };
-      const opt = el("option", {
-        text: code.name,
-        attrs: { value: code.id }
-      });
-      if (APP_STATE.schedule.subCodeId === code.id) opt.selected = true;
-      codeSelect.appendChild(opt);
+  codeSnap.forEach((c) => {
+    const code = { id: c.id, ...c.data() };
+    const opt = el("option", {
+      text: code.name,
+      attrs: { value: code.id }
     });
+    if (APP_STATE.schedule.subCodeId === code.id) opt.selected = true;
+    codeSelect.appendChild(opt);
+  });
 
-    codeSelect.addEventListener("change", () => {
-      APP_STATE.schedule.subCodeId = codeSelect.value;
-      APP_STATE.schedule.selectedActivityId = null;
-      renderScheduleJadualPage();
-    });
+  codeSelect.addEventListener("change", () => {
+    APP_STATE.schedule.subCodeId = codeSelect.value;
+    APP_STATE.schedule.selectedActivityId = null;
+    renderScheduleJadualPage();
+  });
 
-    card.appendChild(codeSelect);
+  card.appendChild(codeSelect);
 
-    // If no code selected → stop here
-    if (!APP_STATE.schedule.subCodeId) {
-      spaRoot.innerHTML = "";
-      spaRoot.appendChild(card);
-      return;
+  // If no code selected → stop here
+  if (!APP_STATE.schedule.subCodeId) {
+    spaRoot.innerHTML = "";
+    spaRoot.appendChild(card);
+    return;
+  }
+
+  const subCodeId = APP_STATE.schedule.subCodeId;
+
+  // =========================
+  // PILIH AKTIVITI (LIBRARY)
+  // =========================
+  const actSelect = el("select");
+  actSelect.appendChild(el("option", { text: "Pilih Aktiviti", attrs: { value: "" } }));
+
+  let actSnap;
+  if (day === "all") {
+    // Loop semua hari untuk ambil semua aktiviti
+    const daysAll = ["isnin","selasa","rabu","khamis","jumaat","sabtu","ahad"];
+    actSnap = [];
+    for (const d of daysAll) {
+      const snap = await userDoc()
+        .collection("schedule_subhari")
+        .doc(d)
+        .collection("codes")
+        .doc(subCodeId)
+        .collection("activities")
+        .orderBy("createdAt","desc")
+        .get();
+      snap.forEach((a) => actSnap.push(a));
     }
+  } else {
+    const codeRef = userDoc()
+      .collection("schedule_subhari")
+      .doc(day)
+      .collection("codes");
+    actSnap = await codeRef.doc(subCodeId).collection("activities").orderBy("createdAt","desc").get();
+  }
 
-    const subCodeId = APP_STATE.schedule.subCodeId;
-
-    // =========================
-    // PILIH AKTIVITI (LIBRARY)
-    // =========================
-    const actSelect = el("select");
-    actSelect.appendChild(el("option", { text: "Pilih Aktiviti", attrs: { value: "" } }));
-
-    const actSnap = await codeRef.doc(subCodeId).collection("activities").orderBy("createdAt", "desc").get();
-
-    actSnap.forEach((a) => {
-      const act = { id: a.id, ...a.data() };
-      const opt = el("option", {
-        text: act.name,
-        attrs: { value: act.id }
-      });
-      if (APP_STATE.schedule.selectedActivityId === act.id) opt.selected = true;
-      actSelect.appendChild(opt);
+  actSnap.forEach((a) => {
+    const act = { id: a.id, ...a.data() };
+    const opt = el("option", {
+      text: act.name,
+      attrs: { value: act.id }
     });
+    if (APP_STATE.schedule.selectedActivityId === act.id) opt.selected = true;
+    actSelect.appendChild(opt);
+  });
 
-    actSelect.addEventListener("change", () => {
-      APP_STATE.schedule.selectedActivityId = actSelect.value;
-      renderScheduleJadualPage();
-    });
+  actSelect.addEventListener("change", () => {
+    APP_STATE.schedule.selectedActivityId = actSelect.value;
+    renderScheduleJadualPage();
+  });
 
-    card.appendChild(actSelect);
+  card.appendChild(actSelect);
 
     // =========================
     // SLOT 1–100
@@ -3682,4 +3721,3 @@
   </script>
 </body>
 </html>
-
