@@ -846,7 +846,7 @@
         .collection("users")
         .doc(APP_STATE.user.uid)
         .collection("schedule_logs")
-        .orderBy("timestamp", "desc")
+        .orderBy("timestamp", "asc")
         .limit(200)
         .get();
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -1053,7 +1053,7 @@
       listContainer.appendChild(loading);
 
       try {
-        const snap = await secbrainTopicsCol().orderBy("createdAt", "desc").get();
+        const snap = await secbrainTopicsCol().orderBy("createdAt", "asc").get();
         listContainer.innerHTML = "";
 
         const filter = searchInput.value.trim().toLowerCase();
@@ -1279,7 +1279,7 @@
 
       try {
         const snap = await secbrainTopicFoldersCol(topicId)
-          .orderBy("createdAt", "desc")
+          .orderBy("createdAt", "asc")
           .get();
         listContainer.innerHTML = "";
         const filter = searchInput.value.trim().toLowerCase();
@@ -1500,7 +1500,7 @@
 
       try {
         const snap = await secbrainFolderCodesCol(topicId, folderId)
-          .orderBy("createdAt", "desc")
+          .orderBy("createdAt", "asc")
           .get();
         listContainer.innerHTML = "";
         const filter = searchInput.value.trim().toLowerCase();
@@ -1707,7 +1707,7 @@
           folderId,
           codeId
         )
-          .orderBy("createdAt", "desc")
+          .orderBy("createdAt", "asc")
           .get();
         listContainer.innerHTML = "";
 
@@ -2133,7 +2133,7 @@
 
     // Load codes
     async function loadCodes() {
-      const snap = await docRef.collection("codes").orderBy("createdAt", "desc").get();
+      const snap = await docRef.collection("codes").orderBy("createdAt", "asc").get();
       listContainer.innerHTML = "";
 
       if (snap.empty) {
@@ -2287,7 +2287,7 @@
     async function loadActivities() {
       const snap = await codeRef
         .collection("activities")
-        .orderBy("createdAt", "desc")
+        .orderBy("createdAt", "asc")
         .get();
 
       listContainer.innerHTML = "";
@@ -2435,7 +2435,7 @@ async function renderScheduleJadualPage() {
         .collection("schedule_subhari")
         .doc(d)
         .collection("codes")
-        .orderBy("createdAt","desc")
+        .orderBy("createdAt","asc")
         .get();
       snap.forEach((c) => codeSnap.push(c));
     }
@@ -2444,7 +2444,7 @@ async function renderScheduleJadualPage() {
       .collection("schedule_subhari")
       .doc(day)
       .collection("codes");
-    codeSnap = await codeRef.orderBy("createdAt","desc").get();
+    codeSnap = await codeRef.orderBy("createdAt","asc").get();
   }
 
   codeSnap.forEach((c) => {
@@ -2490,7 +2490,7 @@ async function renderScheduleJadualPage() {
         .collection("codes")
         .doc(subCodeId)
         .collection("activities")
-        .orderBy("createdAt","desc")
+        .orderBy("createdAt","asc")
         .get();
       snap.forEach((a) => actSnap.push(a));
     }
@@ -2499,7 +2499,7 @@ async function renderScheduleJadualPage() {
       .collection("schedule_subhari")
       .doc(day)
       .collection("codes");
-    actSnap = await codeRef.doc(subCodeId).collection("activities").orderBy("createdAt","desc").get();
+    actSnap = await codeRef.doc(subCodeId).collection("activities").orderBy("createdAt","asc").get();
   }
 
   actSnap.forEach((a) => {
@@ -2687,7 +2687,7 @@ async function renderScheduleJadualPage() {
 
     // Load folder planning
     async function loadPlanning() {
-      const snap = await planningRef.orderBy("createdAt", "desc").get();
+      const snap = await planningRef.orderBy("createdAt", "asc").get();
       listContainer.innerHTML = "";
 
       if (snap.empty) {
@@ -2835,7 +2835,7 @@ async function renderScheduleJadualPage() {
 
     // Load aktiviti
     async function loadActivities() {
-      const snap = await folderRef.collection("activities").orderBy("createdAt", "desc").get();
+      const snap = await folderRef.collection("activities").orderBy("createdAt", "asc").get();
       listContainer.innerHTML = "";
 
       if (snap.empty) {
@@ -3068,7 +3068,7 @@ async function renderScheduleJadualPage() {
 
     // Load link
     async function loadLinks() {
-      const snap = await linkRef.orderBy("createdAt", "desc").get();
+      const snap = await linkRef.orderBy("createdAt", "asc").get();
       listContainer.innerHTML = "";
 
       if (snap.empty) {
@@ -3289,7 +3289,7 @@ async function renderScheduleJadualPage() {
 
     // Load hari & tarikh
     async function loadDates() {
-      const snap = await diaryRef.orderBy("createdAt", "desc").get();
+      const snap = await diaryRef.orderBy("createdAt", "asc").get();
       listContainer.innerHTML = "";
 
       if (snap.empty) {
@@ -3494,7 +3494,7 @@ async function renderScheduleJadualPage() {
 
     // Load tajuk
     async function loadTitles() {
-      const snap = await timeRef.collection("titles").orderBy("createdAt", "desc").get();
+      const snap = await timeRef.collection("titles").orderBy("createdAt", "asc").get();
       listContainer.innerHTML = "";
 
       if (snap.empty) {
