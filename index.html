@@ -2368,7 +2368,6 @@
 async function renderScheduleJadualPage() {
   const card = el("div", { className: "card" });
 
-  // Header
   const header = el("div", { className: "card-header" });
   header.appendChild(
     el("div", {
@@ -2390,8 +2389,6 @@ async function renderScheduleJadualPage() {
   // PILIH HARI
   // =========================
   const daySelect = el("select");
-
-  // 👉 Update: tambah "all" ke dalam array
   const days = ["all","isnin","selasa","rabu","khamis","jumaat","sabtu","ahad"];
 
   daySelect.appendChild(el("option", { text: "Pilih Hari", attrs: { value: "" } }));
@@ -2414,7 +2411,6 @@ async function renderScheduleJadualPage() {
 
   card.appendChild(daySelect);
 
-  // If no day selected → stop here
   if (!APP_STATE.schedule.day) {
     spaRoot.innerHTML = "";
     spaRoot.appendChild(card);
@@ -2430,7 +2426,6 @@ async function renderScheduleJadualPage() {
   const codeSelect = el("select");
   codeSelect.appendChild(el("option", { text: "Pilih Code Sub‑" + dayName, attrs: { value: "" } }));
 
-  // 👉 Update: handle query untuk "all"
   let codeSnap;
   if (day === "all") {
     const daysAll = ["isnin","selasa","rabu","khamis","jumaat","sabtu","ahad"];
@@ -2470,7 +2465,6 @@ async function renderScheduleJadualPage() {
 
   card.appendChild(codeSelect);
 
-  // If no code selected → stop here
   if (!APP_STATE.schedule.subCodeId) {
     spaRoot.innerHTML = "";
     spaRoot.appendChild(card);
@@ -2480,14 +2474,13 @@ async function renderScheduleJadualPage() {
   const subCodeId = APP_STATE.schedule.subCodeId;
 
   // =========================
-  // PILIH AKTIVITI (LIBRARY)
+  // PILIH AKTIVITI
   // =========================
   const actSelect = el("select");
   actSelect.appendChild(el("option", { text: "Pilih Aktiviti", attrs: { value: "" } }));
 
   let actSnap;
   if (day === "all") {
-    // Loop semua hari untuk ambil semua aktiviti
     const daysAll = ["isnin","selasa","rabu","khamis","jumaat","sabtu","ahad"];
     actSnap = [];
     for (const d of daysAll) {
@@ -2526,97 +2519,99 @@ async function renderScheduleJadualPage() {
 
   card.appendChild(actSelect);
 
-    // =========================
-    // SLOT 1–100
-    // =========================
-    const slotContainer = el("div", { className: "schedule-grid mt-3" });
+  // =========================
+  // SLOT 1–100
+  // =========================
+  const slotContainer = el("div", { className: "schedule-grid mt-3" });
 
-    const slotRef = userDoc().collection("schedule_slots").doc(day);
+  const slotRef = userDoc().collection("schedule_slots").doc(day);
+  let slotData = {};
+  const slotSnap = await slotRef.get();
+  if (slotSnap.exists) slotData = slotSnap.data();
 
-    let slotData = {};
-    const slotSnap = await slotRef.get();
-    if (slotSnap.exists) slotData = slotSnap.data();
+  for (let i = 1; i <= 100; i++) {
+    const slot = el("div", { className: "slot" });
 
-    for (let i = 1; i <= 100; i++) {
-      const slot = el("div", { className: "slot" });
+    const header = el("div", { className: "slot-header" });
+    header.appendChild(el("div", { className: "slot-number", text: "#" + i }));
 
-      const header = el("div", { className: "slot-header" });
-      header.appendChild(el("div", { className: "slot-number", text: "#" + i }));
+    const checkbox = el("input", {
+      attrs: { type: "checkbox" },
+      className: "slot-checkbox"
+    });
 
-      const checkbox = el("input", {
-        attrs: { type: "checkbox" },
-        className: "slot-checkbox"
-      });
+    if (slotData[i] && slotData[i].done) checkbox.checked = true;
 
-      // If slot already completed
-      if (slotData[i] && slotData[i].done) checkbox.checked = true;
+    header.appendChild(checkbox);
+    slot.appendChild(header);
 
-      header.appendChild(checkbox);
-      slot.appendChild(header);
+    const actName = slotData[i] ? slotData[i].name : "";
+    const actDiv = el("div", { className: "slot-activity", text: actName });
+    slot.appendChild(actDiv);
 
-      const actName = slotData[i] ? slotData[i].name : "";
-      const actDiv = el("div", { className: "slot-activity", text: actName });
-      slot.appendChild(actDiv);
+    slot.addEventListener("click", async (e) => {
+      if (e.target === checkbox) return;
 
-      // Klik slot → masukkan aktiviti
-      slot.addEventListener("click", async (e) => {
-        if (e.target === checkbox) return;
+      if (!APP_STATE.schedule.selectedActivityId) {
+        alert("Sila pilih aktiviti dahulu.");
+        return;
+      }
 
-        if (!APP_STATE.schedule.selectedActivityId) {
-          alert("Sila pilih aktiviti dahulu.");
-          return;
-        }
+      const selectedAct = Array.isArray(actSnap)
+        ? actSnap.find((d) => d.id === APP_STATE.schedule.selectedActivityId)
+        : actSnap.docs.find((d) => d.id === APP_STATE.schedule.selectedActivityId);
 
-        const selectedAct = actSnap.docs.find((d) => d.id === APP_STATE.schedule.selectedActivityId);
-        if (!selectedAct) return;
+      if (!selectedAct || !selectedAct.data) {
+        alert("Aktiviti tidak sah atau tiada data.");
+        return;
+      }
 
-        const name = selectedAct.data().name;
+      const name = selectedAct.data().name;
 
-        await slotRef.set(
-          {
-            [i]: {
-              name,
-              activityId: selectedAct.id,
-              done: false
-            }
-          },
-          { merge: true }
-        );
+      await slotRef.set(
+        {
+          [i]: {
+            name,
+            activityId: selectedAct.id,
+            done: false
+          }
+        },
+        { merge: true }
+      );
 
-        renderScheduleJadualPage();
-      });
+      renderScheduleJadualPage();
+    });
 
-      // Tick checkbox → simpan log
-      checkbox.addEventListener("change", async () => {
-        const done = checkbox.checked;
+    checkbox.addEventListener("change", async () => {
+      const done = checkbox.checked;
 
-        await slotRef.set(
-          {
-            [i]: {
-              ...(slotData[i] || {}),
-              done
-            }
-          },
-          { merge: true }
-        );
+      await slotRef.set(
+        {
+          [i]: {
+            ...(slotData[i] || {}),
+            done
+          }
+        },
+        { merge: true }
+      );
 
-        if (done) {
-          await saveScheduleLog({
-            dayName,
-            slotNumber: i,
-            activityName: actName
-          });
-        }
-      });
+      if (done) {
+        await saveScheduleLog({
+          dayName,
+          slotNumber: i,
+          activityName: actName
+        });
+      }
+    });
 
-      slotContainer.appendChild(slot);
-    }
-
-    card.appendChild(slotContainer);
-
-    spaRoot.innerHTML = "";
-    spaRoot.appendChild(card);
+    slotContainer.appendChild(slot);
   }
+
+  card.appendChild(slotContainer);
+
+  spaRoot.innerHTML = "";
+  spaRoot.appendChild(card);
+}
 
   // =========================
   // SIMPAN LOG SEJARAH
